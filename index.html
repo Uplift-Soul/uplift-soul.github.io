@@ -1,410 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>INVSTGAMING — Top Live Streams</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    /* Neutral shell */
-    --bg:        oklch(0.975 0.004 95);
-    --bg-2:      oklch(0.958 0.005 95);
-    --surface:   oklch(0.998 0.001 95);
-    --border:    oklch(0.905 0.006 95);
-    --border-2:  oklch(0.86 0.008 95);
-    --ink:       oklch(0.235 0.012 285);
-    --ink-2:     oklch(0.46 0.012 285);
-    --ink-3:     oklch(0.62 0.01 285);
-
-    /* Dark thumbnail base */
-    --frame:     oklch(0.215 0.014 285);
-    --frame-2:   oklch(0.28 0.018 285);
-
-    /* Accents — shared chroma ~0.15, lightness ~0.6, hue varies */
-    --violet:    oklch(0.585 0.165 295);
-    --violet-soft: oklch(0.585 0.165 295 / 0.12);
-    --up:        oklch(0.62 0.135 156);
-    --up-soft:   oklch(0.62 0.135 156 / 0.13);
-    --down:      oklch(0.615 0.16 22);
-    --down-soft: oklch(0.615 0.16 22 / 0.13);
-
-    --radius:    14px;
-    --radius-sm: 9px;
-    --shadow:    0 1px 2px oklch(0.2 0.02 285 / 0.04), 0 6px 20px oklch(0.2 0.02 285 / 0.05);
-    --shadow-lg: 0 2px 6px oklch(0.2 0.02 285 / 0.06), 0 18px 40px oklch(0.2 0.02 285 / 0.10);
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-
-  body {
-    font-family: "Schibsted Grotesk", system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--ink);
-    font-size: 15px;
-    line-height: 1.45;
-    letter-spacing: -0.01em;
-  }
-
-  .mono { font-family: "JetBrains Mono", monospace; font-feature-settings: "tnum" 1; letter-spacing: -0.02em; }
-
-  /* ─── Header ─────────────────────────────────────────── */
-  header {
-    position: sticky; top: 0; z-index: 50;
-    display: flex; align-items: center; gap: 28px;
-    height: 64px; padding: 0 32px;
-    background: oklch(0.975 0.004 95 / 0.82);
-    backdrop-filter: blur(14px) saturate(1.2);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .wordmark {
-    display: flex; align-items: center; gap: 11px;
-    font-weight: 800; font-size: 18px; letter-spacing: -0.04em;
-    color: var(--ink); text-decoration: none; white-space: nowrap;
-  }
-  .glyph {
-    width: 30px; height: 30px; border-radius: 8px;
-    background: linear-gradient(150deg, var(--violet), oklch(0.5 0.17 305));
-    display: grid; place-items: center;
-    box-shadow: 0 2px 8px var(--violet-soft);
-    position: relative;
-  }
-  .glyph::before {
-    content: ""; width: 11px; height: 11px;
-    border: 2.5px solid white; border-radius: 50% 50% 50% 2px;
-    transform: rotate(0deg);
-  }
-  .wordmark b { color: var(--violet); font-weight: 800; }
-
-  nav { display: flex; align-items: center; gap: 4px; }
-  nav a {
-    font-size: 14px; font-weight: 500; color: var(--ink-2);
-    text-decoration: none; padding: 7px 13px; border-radius: 8px;
-    transition: background .15s, color .15s;
-  }
-  nav a:hover { background: var(--bg-2); color: var(--ink); }
-  nav a.active { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
-
-  .search {
-    margin-left: auto;
-    display: flex; align-items: center; gap: 9px;
-    width: 248px; height: 38px; padding: 0 13px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; color: var(--ink-3); font-size: 13.5px;
-    transition: border-color .15s, box-shadow .15s;
-  }
-  .search:hover { border-color: var(--border-2); }
-  .search svg { flex: none; }
-
-  .header-actions { display: flex; align-items: center; gap: 14px; }
-  .icon-btn {
-    width: 38px; height: 38px; border-radius: 10px;
-    border: 1px solid var(--border); background: var(--surface);
-    display: grid; place-items: center; color: var(--ink-2);
-    cursor: pointer; transition: border-color .15s, color .15s;
-  }
-  .icon-btn:hover { border-color: var(--border-2); color: var(--ink); }
-  .avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    background: linear-gradient(140deg, oklch(0.7 0.08 60), oklch(0.55 0.1 30));
-    box-shadow: inset 0 0 0 1px oklch(0.2 0.02 285 / 0.08);
-  }
-
-  /* ─── Layout ─────────────────────────────────────────── */
-  main { max-width: 1440px; margin: 0 auto; padding: 36px 32px 80px; }
-
-  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
-  .page-head h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.035em; line-height: 1.1; }
-  .page-head p { color: var(--ink-2); font-size: 14.5px; margin-top: 6px; }
-  .page-head .live-dot { color: var(--violet); }
-
-  /* Dashboard stat strip */
-  .stats {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); box-shadow: var(--shadow);
-    overflow: hidden; margin-bottom: 26px;
-  }
-  .stat { padding: 18px 22px; border-right: 1px solid var(--border); }
-  .stat:last-child { border-right: 0; }
-  .stat .label { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); display: flex; align-items: center; gap: 7px; }
-  .stat .value { font-size: 27px; font-weight: 600; margin-top: 9px; letter-spacing: -0.04em; }
-  .stat .value small { font-size: 15px; color: var(--ink-3); font-weight: 500; }
-  .stat .delta { font-size: 12.5px; margin-top: 4px; }
-  .pos { color: var(--up); } .neg { color: var(--down); }
-
-  .pulse {
-    width: 8px; height: 8px; border-radius: 50%; background: var(--violet);
-    box-shadow: 0 0 0 0 var(--violet);
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .pulse { animation: pulse 2.4s ease-out infinite; }
-    @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 oklch(0.585 0.165 295 / 0.5); }
-      70% { box-shadow: 0 0 0 7px oklch(0.585 0.165 295 / 0); }
-      100% { box-shadow: 0 0 0 0 oklch(0.585 0.165 295 / 0); }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
-  }
 
-  /* Filter / sort row */
-  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
-  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-  .chip {
-    font-size: 13.5px; font-weight: 500; color: var(--ink-2);
-    padding: 7px 14px; border-radius: 999px;
-    border: 1px solid var(--border); background: var(--surface);
-    cursor: pointer; transition: all .15s; white-space: nowrap;
-  }
-  .chip:hover { border-color: var(--border-2); color: var(--ink); }
-  .chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  .sort {
-    margin-left: auto; display: flex; align-items: center; gap: 8px;
-    font-size: 13.5px; color: var(--ink-2);
-  }
-  .sort .select {
-    display: flex; align-items: center; gap: 8px;
-    padding: 7px 13px; border: 1px solid var(--border); border-radius: 9px;
-    background: var(--surface); font-weight: 500; color: var(--ink); cursor: pointer;
-  }
-  .sort .select:hover { border-color: var(--border-2); }
+    .box {
+      text-align: center;
+      padding: 30px;
+      border-radius: 12px;
+      background: #1e293b;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
 
-  /* ─── Grid + Cards ───────────────────────────────────── */
-  .grid {
-    display: grid; gap: 20px;
-    grid-template-columns: repeat(4, 1fr);
-  }
-  @media (max-width: 1180px) { .grid { grid-template-columns: repeat(3, 1fr); } .stats { grid-template-columns: repeat(2,1fr); } .stat:nth-child(2){border-right:0;} }
-  @media (max-width: 820px)  { .grid { grid-template-columns: repeat(2, 1fr); } main{padding:28px 20px 64px;} header{padding:0 20px;} nav{display:none;} }
-  @media (max-width: 540px)  { .grid { grid-template-columns: 1fr; } .stats{grid-template-columns:1fr;} .stat{border-right:0;border-bottom:1px solid var(--border);} .search{display:none;} }
+    h1 {
+      margin: 0 0 10px;
+    }
 
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); overflow: hidden;
-    box-shadow: var(--shadow); cursor: pointer;
-    transition: transform .18s cubic-bezier(.2,.7,.3,1), box-shadow .18s, border-color .18s;
-  }
-  .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--border-2); }
+    p {
+      color: #94a3b8;
+    }
 
-  .thumb {
-    position: relative; aspect-ratio: 16/9; overflow: hidden;
-    background: var(--frame);
-  }
-  .thumb .ph {
-    position: absolute; inset: 0;
-    background-image:
-      repeating-linear-gradient(135deg, oklch(1 0 0 / 0.025) 0 2px, transparent 2px 9px);
-  }
-  .thumb .ph::after {
-    content: attr(data-label);
-    position: absolute; inset: 0; display: grid; place-items: center;
-    font-family: "JetBrains Mono", monospace; font-size: 11px;
-    color: oklch(1 0 0 / 0.28); letter-spacing: 0.04em;
-  }
-  .rank {
-    position: absolute; top: 10px; left: 10px;
-    font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 600;
-    color: oklch(1 0 0 / 0.92); background: oklch(0.18 0.01 285 / 0.55);
-    backdrop-filter: blur(6px); padding: 3px 8px; border-radius: 7px;
-    border: 1px solid oklch(1 0 0 / 0.12);
-  }
-  .live {
-    position: absolute; top: 10px; right: 10px;
-    display: flex; align-items: center; gap: 6px;
-    font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-    color: white; background: var(--violet);
-    padding: 4px 9px; border-radius: 7px;
-    box-shadow: 0 2px 8px oklch(0.585 0.165 295 / 0.4);
-  }
-  .live .dot { width: 6px; height: 6px; border-radius: 50%; background: white; }
-  .viewers {
-    position: absolute; bottom: 10px; left: 10px;
-    display: flex; align-items: center; gap: 6px;
-    font-family: "JetBrains Mono", monospace; font-size: 12.5px; font-weight: 600;
-    color: white; background: oklch(0.18 0.01 285 / 0.6);
-    backdrop-filter: blur(6px); padding: 4px 9px; border-radius: 7px;
-  }
-  .viewers .vdot { width: 6px; height: 6px; border-radius: 50%; background: var(--down); }
-  .uptime {
-    position: absolute; bottom: 10px; right: 10px;
-    font-family: "JetBrains Mono", monospace; font-size: 11.5px; font-weight: 500;
-    color: oklch(1 0 0 / 0.8); background: oklch(0.18 0.01 285 / 0.5);
-    backdrop-filter: blur(6px); padding: 3px 8px; border-radius: 7px;
-  }
-
-  .meta { padding: 13px 14px 15px; display: flex; gap: 11px; }
-  .pfp {
-    width: 38px; height: 38px; border-radius: 50%; flex: none;
-    box-shadow: inset 0 0 0 1px oklch(0.2 0.02 285 / 0.08);
-  }
-  .meta-body { min-width: 0; flex: 1; }
-  .title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .sname { font-weight: 600; font-size: 14.5px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cat { font-size: 13px; color: var(--ink-2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-  .trend { display: flex; align-items: center; gap: 6px; flex: none; }
-  .trend .badge {
-    display: flex; align-items: center; gap: 3px;
-    font-family: "JetBrains Mono", monospace; font-size: 12px; font-weight: 600;
-    padding: 2px 7px; border-radius: 6px;
-  }
-  .trend.up .badge { color: var(--up); background: var(--up-soft); }
-  .trend.down .badge { color: var(--down); background: var(--down-soft); }
-  .spark { display: block; }
-
-  footer { border-top: 1px solid var(--border); color: var(--ink-3); font-size: 13px; }
-  .foot-in { max-width: 1440px; margin: 0 auto; padding: 24px 32px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-</style>
+    .tag {
+      margin-top: 15px;
+      font-size: 12px;
+      color: #38bdf8;
+    }
+  </style>
 </head>
 <body>
-
-<header>
-  <a href="#" class="wordmark"><span class="glyph"></span>INVST<b>GAMING</b></a>
-  <nav>
-    <a href="#" class="active">Top Streams</a>
-    <a href="#">Games</a>
-    <a href="#">Movers</a>
-    <a href="#">Insights</a>
-  </nav>
-  <div class="search">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-    <span>Search streams, games…</span>
+  <div class="box">
+    <h1>GitHub Pages Works</h1>
+    <p>If you see this, your deploy is correct.</p>
+    <div class="tag">v1.0 test build</div>
   </div>
-  <div class="header-actions">
-    <button class="icon-btn" aria-label="Notifications">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-    </button>
-    <div class="avatar" aria-label="Account"></div>
-  </div>
-</header>
-
-<main>
-  <div class="page-head">
-    <div>
-      <h1>Top Live Streams</h1>
-      <p><span class="live-dot mono">●</span> Ranked by concurrent viewers · updated in real time</p>
-    </div>
-  </div>
-
-  <section class="stats" aria-label="Network overview">
-    <div class="stat">
-      <div class="label"><span class="pulse"></span>Live channels</div>
-      <div class="value mono" id="s-channels">4,218</div>
-      <div class="delta pos mono">▲ 3.1% vs 1h ago</div>
-    </div>
-    <div class="stat">
-      <div class="label">Viewers right now</div>
-      <div class="value mono">1.24<small>M</small></div>
-      <div class="delta pos mono">▲ 5.8% vs 1h ago</div>
-    </div>
-    <div class="stat">
-      <div class="label">Top category</div>
-      <div class="value">Just Chatting</div>
-      <div class="delta neg mono">▼ 1.2% share</div>
-    </div>
-    <div class="stat">
-      <div class="label">Biggest mover</div>
-      <div class="value">V1PER</div>
-      <div class="delta pos mono">▲ 214% in 30m</div>
-    </div>
-  </section>
-
-  <div class="toolbar">
-    <div class="chips">
-      <button class="chip active">All categories</button>
-      <button class="chip">Just Chatting</button>
-      <button class="chip">FPS</button>
-      <button class="chip">MOBA</button>
-      <button class="chip">Sandbox</button>
-      <button class="chip">Sports</button>
-    </div>
-    <div class="sort">
-      <span>Sort</span>
-      <div class="select">
-        Viewers (high → low)
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m6 9 6 6 6-6"/></svg>
-      </div>
-    </div>
-  </div>
-
-  <section class="grid" id="grid" aria-label="Top streams"></section>
-</main>
-
-<footer>
-  <div class="foot-in">
-    <span>© 2026 INVSTGAMING · Independent stream analytics</span>
-    <span class="mono">Data refreshes every 30s · not affiliated with any platform</span>
-  </div>
-</footer>
-
-<script>
-  // Muted hue per card for thumbnail variety (premium, low-sat)
-  const streams = [
-    { name: "NovaPulse",      game: "VALORANT",               viewers: 87240, up: true,  pct: 12, hue: 295, rank: 1, up_time: "4:12:09" },
-    { name: "ApexWarden",     game: "Apex Legends",           viewers: 64580, up: true,  pct: 8,  hue: 22,  rank: 2, up_time: "2:48:31" },
-    { name: "lunaplays",      game: "Just Chatting",          viewers: 58910, up: false, pct: 4,  hue: 60,  rank: 3, up_time: "5:03:55" },
-    { name: "V1PER",          game: "Counter-Strike 2",       viewers: 52170, up: true,  pct: 31, hue: 156, rank: 4, up_time: "1:19:42" },
-    { name: "GhostByte",      game: "League of Legends",      viewers: 41320, up: true,  pct: 6,  hue: 250, rank: 5, up_time: "3:31:08" },
-    { name: "Maelstrom_TV",   game: "Grand Theft Auto V",     viewers: 38640, up: false, pct: 9,  hue: 200, rank: 6, up_time: "6:22:17" },
-    { name: "pixelnomad",     game: "Minecraft",              viewers: 33510, up: true,  pct: 14, hue: 145, rank: 7, up_time: "2:05:50" },
-    { name: "Crysalis",       game: "Fortnite",               viewers: 29870, up: false, pct: 3,  hue: 330, rank: 8, up_time: "0:54:11" },
-    { name: "RiftRunner",     game: "Dota 2",                 viewers: 26430, up: true,  pct: 5,  hue: 280, rank: 9, up_time: "4:47:36" },
-    { name: "echo_frame",     game: "EA Sports FC 25",        viewers: 22980, up: true,  pct: 18, hue: 130, rank: 10, up_time: "1:38:24" },
-    { name: "DaybreakGG",     game: "Call of Duty: Warzone",  viewers: 20140, up: false, pct: 7,  hue: 35,  rank: 11, up_time: "3:09:02" },
-    { name: "Solenne",        game: "World of Warcraft",      viewers: 18760, up: true,  pct: 9,  hue: 90,  rank: 12, up_time: "7:14:48" },
-  ];
-
-  const fmt = n => n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/,'') + "K" : "" + n;
-
-  // Generates a gentle sparkline path trending up or down
-  function spark(up) {
-    const w = 46, h = 18, n = 12;
-    const pts = [];
-    let v = up ? 0.7 : 0.3;
-    for (let i = 0; i < n; i++) {
-      v += (up ? 1 : -1) * (0.02 + Math.random()*0.06) + (Math.random()-0.5)*0.10;
-      v = Math.max(0.08, Math.min(0.92, v));
-      pts.push([ (i/(n-1))*w, h - v*h ]);
-    }
-    return pts.map((p,i)=> (i? "L":"M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
-  }
-
-  const grid = document.getElementById('grid');
-  grid.innerHTML = streams.map(s => {
-    const tone = `oklch(0.24 0.03 ${s.hue})`;
-    const tone2 = `oklch(0.32 0.045 ${s.hue})`;
-    const pfp = `linear-gradient(140deg, oklch(0.7 0.09 ${s.hue}), oklch(0.5 0.12 ${(s.hue+40)%360}))`;
-    const col = s.up ? 'var(--up)' : 'var(--down)';
-    return `
-    <article class="card">
-      <div class="thumb" style="background:linear-gradient(150deg, ${tone}, ${tone2});">
-        <div class="ph" data-label="1280×720 · stream frame"></div>
-        <span class="rank mono">#${s.rank}</span>
-        <span class="live"><span class="dot"></span>Live</span>
-        <span class="viewers mono"><span class="vdot"></span>${fmt(s.viewers)}</span>
-        <span class="uptime mono">${s.up_time}</span>
-      </div>
-      <div class="meta">
-        <div class="pfp" style="background:${pfp};"></div>
-        <div class="meta-body">
-          <div class="title-row">
-            <span class="sname">${s.name}</span>
-            <span class="trend ${s.up?'up':'down'}">
-              <svg class="spark" width="46" height="18" viewBox="0 0 46 18" fill="none">
-                <path d="${spark(s.up)}" stroke="${col}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-              </svg>
-              <span class="badge">${s.up?'▲':'▼'} ${s.pct}%</span>
-            </span>
-          </div>
-          <div class="cat">${s.game}</div>
-        </div>
-      </div>
-    </article>`;
-  }).join('');
-</script>
 </body>
 </html>
