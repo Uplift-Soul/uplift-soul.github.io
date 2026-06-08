@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twitch Analytics — Live</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <a href="index.html">Overview</a>
+    <a href="live.html" class="active">Live</a>
+    <a href="historical.html">Historical</a>
+  </nav>
+
+  <header>
+    <div class="brand">
+      <div class="kicker">Live · latest snapshot</div>
+      <h1>Twitch <span>Live</span></h1>
+    </div>
+    <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
+  </header>
+
+  <section class="panel">
+    <h2>Top Categories — Now</h2>
+    <div id="cats" class="js-err"><div class="loading">Loading current snapshot…</div></div>
+  </section>
+
+  <section class="panel frag alt">
+    <h2>Fragility — Most Top-Heavy Now</h2>
+    <div class="cap">Categories ranked by how much of their audience sits with just the top 10 streamers. A high share means the category leans on a few big names — if they go offline, it empties out. Flagged <span class="tag">fragile</span> above 80%.</div>
+    <div id="frag"><div class="loading">Loading concentration…</div></div>
+  </section>
+
+  <footer>Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi</footer>
+</div>
+
+<script src="common.js"></script>
+<script>
+function renderCats(data){
+  const cur=data.current||[];
+  const el=document.getElementById("cats");
+  if(!cur.length){el.innerHTML='<div class="error">No current data yet.</div>';return;}
+  const max=Math.max(...cur.map(c=>c.viewership||0))||1;
+  el.innerHTML = '<div class="rows">'+cur.map(c=>`
+    <div class="row">
+      <div class="rank">${String(c.rank).padStart(2,'0')}</div>
+      <div class="barwrap">
+        <div class="barname">
+          <span class="cat">${c.category}</span>
+          <span class="conc">top 10 = <b>${c.top10_pct!=null?c.top10_pct+'%':'—'}</b></span>
+        </div>
+        <div class="track"><div class="fill" data-w="${(c.viewership/max*100).toFixed(1)}"></div></div>
+      </div>
+      <div class="views">${fmt(c.viewership)}</div>
+    </div>`).join("")+'</div>';
+  requestAnimationFrame(()=>el.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%"));
+}
+
+function renderFragility(data){
+  const cur=(data.current||[]).filter(c=>c.top10_pct!=null);
+  const el=document.getElementById("frag");
+  if(!cur.length){el.innerHTML='<div class="error">No concentration data yet.</div>';return;}
+  const ranked=[...cur].sort((a,b)=>b.top10_pct-a.top10_pct);
+  el.innerHTML = '<div class="rows">'+ranked.map((c,i)=>`
+    <div class="row">
+      <div class="rank">${String(i+1).padStart(2,'0')}</div>
+      <div class="barwrap">
+        <div class="barname">
+          <span class="cat">${c.category}${c.top10_pct>=80?' <span class="tag">fragile</span>':''}</span>
+          <span class="conc">${fmt(c.viewership)} viewers</span>
+        </div>
+        <div class="track"><div class="fill teal" data-w="${c.top10_pct.toFixed(1)}"></div></div>
+      </div>
+      <div class="views">${c.top10_pct.toFixed(0)}%</div>
+    </div>`).join("")+'</div>';
+  requestAnimationFrame(()=>el.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%"));
+}
+
+loadData().then(data=>{
+  setUpdated(data);
+  renderCats(data);
+  renderFragility(data);
+}).catch(showError);
+</script>
+</body>
+</html>
