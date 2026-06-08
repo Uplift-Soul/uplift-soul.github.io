@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twitch Analytics — Historical</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <a href="index.html">Overview</a>
+    <a href="live.html">Live</a>
+    <a href="historical.html" class="active">Historical</a>
+  </nav>
+
+  <header>
+    <div class="brand">
+      <div class="kicker">Historical · Mar 2024 – Jun 2025</div>
+      <h1>Twitch <span>History</span></h1>
+    </div>
+    <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
+  </header>
+
+  <section class="panel">
+    <h2>Rankings Over Time</h2>
+    <div class="cap">How the top categories traded places month to month — a bump chart of category rank across the 15-month history.</div>
+    <div class="placeholder">Coming next. This needs <b>monthly rank data</b>, which I'm adding to the pipeline (<b>publish.py</b>) in the next step. Once it's emitting, this becomes a live bump chart.</div>
+  </section>
+
+  <section class="panel alt">
+    <h2>Biggest Movers</h2>
+    <div class="cap">Categories that gained or lost the most viewership across the historical window — the year's risers and fallers.</div>
+    <div class="placeholder">Coming next, alongside the rankings chart — built from the same <b>monthly viewership data</b> added in the next pipeline step.</div>
+  </section>
+
+  <footer>Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi</footer>
+</div>
+
+<script src="common.js"></script>
+<script>
+/* nothing to render yet — just light up the status pill from the shared data file */
+loadData().then(setUpdated).catch(showError);
+</script>
+</body>
+</html>
