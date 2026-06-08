@@ -93,6 +93,7 @@ h1 span{color:var(--accent)}
   background:linear-gradient(90deg,var(--accent-dim),var(--accent));
   transition:width 1s cubic-bezier(.2,.7,.2,1)}
 .fill.teal{background:linear-gradient(90deg,#0e9e8a,var(--teal))}
+.fill.red{background:linear-gradient(90deg,#b0454a,#ff7a7a)}
 .views{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:500;text-align:right}
 
 /* fragile tag */
@@ -107,6 +108,19 @@ h1 span{color:var(--accent)}
 .panel.frag{animation-delay:.44s}
 .cap{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);
   margin:-6px 0 16px;letter-spacing:.02em;line-height:1.5}
+
+/* movers (risers / fallers) */
+.movers{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.movertitle{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.movertitle.up{color:var(--teal)}
+.movertitle.down{color:#ff8080}
+.moverrow{margin-bottom:13px}
+.moverhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;gap:10px}
+.moverval{font-family:"IBM Plex Mono",monospace;font-size:12px;white-space:nowrap}
+.moverval.up{color:var(--teal)}
+.moverval.down{color:#ff8080}
+@media(max-width:760px){.movers{grid-template-columns:1fr;gap:18px}}
 
 /* placeholder (for not-yet-built panels) */
 .placeholder{font-family:"IBM Plex Mono",monospace;color:var(--muted);font-size:13px;
