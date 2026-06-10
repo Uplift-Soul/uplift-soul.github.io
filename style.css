@@ -114,7 +114,8 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .panel.conc{animation-delay:.52s}
 .panel.frag{animation-delay:.44s}
 .cap{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);
-  margin:-6px 0 16px;letter-spacing:.02em;line-height:1.5}
+  margin:-6px 0 16px;letter-spacing:.02em;line-height:1.5;
+  white-space:normal;overflow-wrap:break-word;max-width:100%}
 
 /* movers (risers / fallers) */
 .movers{display:grid;grid-template-columns:1fr 1fr;gap:28px}
