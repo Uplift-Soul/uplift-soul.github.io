@@ -7,10 +7,13 @@
   --line:#23232f;
   --text:#ececf4;
   --muted:#8a8aa0;
-  --accent:#a970ff;
-  --accent-dim:#6f4bb0;
-  --teal:#13e3c5;
-  --glow:rgba(169,112,255,.22);
+  --accent:#2dd4a0;
+  --accent-dim:#1d8f6e;
+  --purple:#a970ff;
+  --purple-dim:#6f4bb0;
+  --teal:#2dd4a0;
+  --coral:#ff5c7a;
+  --glow:rgba(45,212,160,.14);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -23,7 +26,7 @@ body{
   -webkit-font-smoothing:antialiased;
   background-image:
     radial-gradient(900px 500px at 80% -10%, var(--glow), transparent 60%),
-    radial-gradient(700px 400px at 0% 0%, rgba(19,227,197,.06), transparent 55%);
+    radial-gradient(700px 400px at 0% 0%, rgba(169,112,255,.07), transparent 55%);
   background-attachment:fixed;
 }
 /* faint dot grid texture */
@@ -53,11 +56,15 @@ header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
 h1{font-family:"Chakra Petch",sans-serif;font-weight:700;font-size:clamp(28px,5vw,46px);
   letter-spacing:.01em;line-height:1.02}
 h1 span{color:var(--accent)}
+h1 .vmark{height:.72em;width:auto;display:inline-block;vertical-align:baseline;margin:0 .05em}
+h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-linejoin:miter}
+.wordsub{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.55em;
+  text-transform:uppercase;color:var(--muted);margin-top:3px}
 .status{display:flex;align-items:center;gap:10px;font-family:"IBM Plex Mono",monospace;
   font-size:12px;color:var(--muted)}
 .dot{width:9px;height:9px;border-radius:50%;background:var(--teal);
-  box-shadow:0 0 0 0 rgba(19,227,197,.6);animation:pulse 2s infinite}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(19,227,197,.55)}70%{box-shadow:0 0 0 10px rgba(19,227,197,0)}100%{box-shadow:0 0 0 0 rgba(19,227,197,0)}}
+  box-shadow:0 0 0 0 rgba(45,212,160,.6);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,212,160,.55)}70%{box-shadow:0 0 0 10px rgba(45,212,160,0)}100%{box-shadow:0 0 0 0 rgba(45,212,160,0)}}
 
 /* kpi strip */
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:30px}
@@ -90,10 +97,10 @@ h1 span{color:var(--accent)}
 .conc b{color:var(--teal);font-weight:500}
 .track{height:8px;background:var(--panel-2);border-radius:6px;overflow:hidden}
 .fill{height:100%;border-radius:6px;width:0;
-  background:linear-gradient(90deg,var(--accent-dim),var(--accent));
+  background:linear-gradient(90deg,var(--purple-dim),var(--purple));
   transition:width 1s cubic-bezier(.2,.7,.2,1)}
-.fill.teal{background:linear-gradient(90deg,#0e9e8a,var(--teal))}
-.fill.red{background:linear-gradient(90deg,#b0454a,#ff7a7a)}
+.fill.teal{background:linear-gradient(90deg,#17a87d,var(--teal))}
+.fill.red{background:linear-gradient(90deg,#b03a55,var(--coral))}
 .views{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:500;text-align:right}
 
 /* fragile tag */
@@ -107,19 +114,20 @@ h1 span{color:var(--accent)}
 .panel.conc{animation-delay:.52s}
 .panel.frag{animation-delay:.44s}
 .cap{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);
-  margin:-6px 0 16px;letter-spacing:.02em;line-height:1.5}
+  margin:-6px 0 16px;letter-spacing:.02em;line-height:1.5;
+  white-space:normal;overflow-wrap:break-word;max-width:100%}
 
 /* movers (risers / fallers) */
 .movers{display:grid;grid-template-columns:1fr 1fr;gap:28px}
 .movertitle{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--muted);margin-bottom:14px}
 .movertitle.up{color:var(--teal)}
-.movertitle.down{color:#ff8080}
+.movertitle.down{color:var(--coral)}
 .moverrow{margin-bottom:13px}
 .moverhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;gap:10px}
 .moverval{font-family:"IBM Plex Mono",monospace;font-size:12px;white-space:nowrap}
 .moverval.up{color:var(--teal)}
-.moverval.down{color:#ff8080}
+.moverval.down{color:var(--coral)}
 @media(max-width:760px){.movers{grid-template-columns:1fr;gap:18px}}
 
 /* placeholder (for not-yet-built panels) */
@@ -133,7 +141,7 @@ footer{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
 .loading,.error{font-family:"IBM Plex Mono",monospace;color:var(--muted);font-size:13px;padding:14px 0}
-.error{color:#ff8080}
+.error{color:var(--coral)}
 
 @media(max-width:760px){
   .kpis{grid-template-columns:repeat(2,1fr)}
