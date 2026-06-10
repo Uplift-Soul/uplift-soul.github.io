@@ -1,6 +1,6 @@
 /* common.js — shared helpers + data loader for all dashboard pages */
 
-const PALETTE = ["#a970ff","#13e3c5","#ff7eb6","#ffb347","#5aa9ff","#9dff6e","#ff6b6b","#c08bff","#46d6a8","#ffd166"];
+const PALETTE = ["#2dd4a0","#a970ff","#ff7eb6","#ffb347","#5aa9ff","#9dff6e","#ff5c7a","#c08bff","#13e3c5","#ffd166"];
 
 const fmt = n => {
   n = Number(n)||0;
