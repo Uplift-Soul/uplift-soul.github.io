@@ -102,3 +102,76 @@ if (window.Chart) {
     chart.update();
   };
 }
+
+
+/* ---- range pills + category chips, injected above every line chart ---- */
+if (window.Chart) {
+  Chart.register({
+    id: "invstControls",
+    afterInit(chart){
+      const xs = chart.options.scales && chart.options.scales.x;
+      const box = chart.canvas.closest(".chartbox");
+      if (!xs || !box || chart.$ctl) return;
+      chart.$ctl = true;
+      chart.options.plugins.legend.display = false;
+
+      const isTime = xs.type === "time";
+      if (isTime) {
+        let mx = 0;
+        chart.data.datasets.forEach(d => d.data.forEach(p => {
+          const t = +new Date(p.x); if (t > mx) mx = t;
+        }));
+        chart.$mx = mx;
+      } else {
+        chart.$L = chart.data.labels.slice();
+        chart.$D = chart.data.datasets.map(d => d.data.slice());
+      }
+
+      function setRange(m){
+        if (isTime) {
+          chart.options.scales.x.min =
+            m ? new Date(chart.$mx - m*30.44*864e5).toISOString() : undefined;
+        } else {
+          const n = m || chart.$L.length;
+          chart.data.labels = chart.$L.slice(-n);
+          chart.data.datasets.forEach((d,i) => d.data = chart.$D[i].slice(-n));
+        }
+        chart.update();
+      }
+
+      const ctl = document.createElement("div"); ctl.className = "chartctl";
+      const pills = document.createElement("div"); pills.className = "pills";
+      const def = isTime ? 6 : 0;
+      [["3M",3],["6M",6],["1Y",12],["All",0]].forEach(([t,m]) => {
+        const b = document.createElement("button");
+        b.className = "cpill" + (m===def ? " on" : "");
+        b.textContent = t;
+        b.onclick = () => {
+          pills.querySelectorAll(".cpill").forEach(x => x.classList.remove("on"));
+          b.classList.add("on");
+          setRange(m);
+        };
+        pills.appendChild(b);
+      });
+
+      const chips = document.createElement("div"); chips.className = "chips";
+      chart.data.datasets.forEach((d,i) => {
+        const c = document.createElement("button");
+        c.className = "chip";
+        c.style.setProperty("--c", d.borderColor);
+        c.innerHTML = '<span class="dotc"></span>' + d.label;
+        const paint = () => c.classList.toggle("on", chart.isDatasetVisible(i));
+        c.onclick = () => {
+          chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
+          chart.update(); paint();
+        };
+        paint();
+        chips.appendChild(c);
+      });
+
+      ctl.appendChild(pills); ctl.appendChild(chips);
+      box.parentNode.insertBefore(ctl, box);
+      if (def) setRange(def);
+    }
+  });
+}
