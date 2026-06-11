@@ -110,6 +110,18 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 
 /* chart */
 .chartbox{position:relative;height:380px}
+.chartctl{display:flex;flex-direction:column;gap:8px;margin:-4px 0 14px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.cpill{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:3px 12px;border-radius:999px;
+  border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;
+  transition:color .15s,border-color .15s}
+.cpill.on{border-color:var(--accent);color:var(--accent);background:rgba(45,212,160,.08)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:"IBM Plex Sans",sans-serif;
+  font-size:11px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);
+  background:transparent;color:var(--muted);cursor:pointer;opacity:.5;transition:opacity .15s}
+.chip.on{opacity:1;color:var(--text);border-color:var(--c)}
+.chip .dotc{width:8px;height:8px;border-radius:50%;background:var(--c)}
 .panel.trend{animation-delay:.44s}
 .panel.conc{animation-delay:.52s}
 .panel.frag{animation-delay:.44s}
@@ -146,4 +158,8 @@ footer{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);
 @media(max-width:760px){
   .kpis{grid-template-columns:repeat(2,1fr)}
   .row{grid-template-columns:24px 1fr 70px;gap:10px}
+  body{background-attachment:scroll}   /* mobile Safari repaint bug */
+  .wrap{padding:24px 14px 48px}
+  .panel{padding:16px}
+  .chartbox{height:300px}
 }
