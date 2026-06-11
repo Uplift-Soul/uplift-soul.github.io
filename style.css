@@ -111,7 +111,7 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 /* chart */
 .chartbox{position:relative;height:380px}
 .chartctl{display:flex;flex-direction:column;gap:8px;margin:-4px 0 14px}
-.pills{display:flex;gap:6px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
 .cpill{font-family:"IBM Plex Mono",monospace;font-size:11px;padding:3px 12px;border-radius:999px;
   border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;
   transition:color .15s,border-color .15s}
