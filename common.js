@@ -104,7 +104,10 @@ if (window.Chart) {
 }
 
 
-/* ---- range pills + category chips, injected above every line chart ---- */
+/* ---- era-aware range pills + category chips, injected above every line chart.
+   Pills derive from the data itself: with two data islands you get
+   Archive / Live / All; duration pills (3M/6M/1Y) appear automatically
+   once the live era is long enough to make them meaningful. ---- */
 if (window.Chart) {
   Chart.register({
     id: "invstControls",
@@ -114,42 +117,68 @@ if (window.Chart) {
       if (!xs || !box || chart.$ctl) return;
       chart.$ctl = true;
       chart.options.plugins.legend.display = false;
-
       const isTime = xs.type === "time";
-      if (isTime) {
-        let mx = 0;
-        chart.data.datasets.forEach(d => d.data.forEach(p => {
-          const t = +new Date(p.x); if (t > mx) mx = t;
-        }));
-        chart.$mx = mx;
-      } else {
-        chart.$L = chart.data.labels.slice();
-        chart.$D = chart.data.datasets.map(d => d.data.slice());
-      }
+      const DAY = 864e5;
+      const ranges = [];
 
-      function setRange(m){
-        if (isTime) {
-          chart.options.scales.x.min =
-            m ? new Date(chart.$mx - m*30.44*864e5).toISOString() : undefined;
-        } else {
-          const n = m || chart.$L.length;
-          chart.data.labels = chart.$L.slice(-n);
-          chart.data.datasets.forEach((d,i) => d.data = chart.$D[i].slice(-n));
+      if (isTime) {
+        const days = [...new Set([].concat(...chart.data.datasets.map(
+          d => d.data.map(p => +new Date(p.x))
+        )))].sort((a,b) => a-b);
+        const isl = [];
+        days.forEach(t => {
+          const last = isl[isl.length-1];
+          if (!last || t - last[1] > 45*DAY) isl.push([t,t]); else last[1] = t;
+        });
+        const mx = days[days.length-1] || 0;
+        const span = (a,b) => () => {
+          xs.min = new Date(a - 2*DAY).toISOString();
+          xs.max = new Date(b + 2*DAY).toISOString();
+        };
+        if (isl.length > 1) {
+          ranges.push(["Archive", span(isl[0][0], isl[isl.length-2][1])]);
+          ranges.push(["Live",    span(isl[isl.length-1][0], mx)]);
         }
-        chart.update();
+        const liveLen = isl.length ? isl[isl.length-1][1] - isl[isl.length-1][0] : 0;
+        if (liveLen >=  95*DAY) ranges.push(["3M", span(mx -  91*DAY, mx)]);
+        if (liveLen >= 185*DAY) ranges.push(["6M", span(mx - 183*DAY, mx)]);
+        if (liveLen >= 370*DAY) ranges.push(["1Y", span(mx - 365*DAY, mx)]);
+        ranges.push(["All", () => { xs.min = undefined; xs.max = undefined; }]);
+      } else {
+        const L = chart.data.labels.slice();
+        const D = chart.data.datasets.map(d => d.data.slice());
+        const has = i => D.some(d => d[i] != null);
+        const isl = [];
+        for (let i = 0; i < L.length; i++) if (has(i)) {
+          const last = isl[isl.length-1];
+          if (last && last[1] === i-1) last[1] = i; else isl.push([i,i]);
+        }
+        const slice = (a,b) => () => {
+          chart.data.labels = L.slice(a, b+1);
+          chart.data.datasets.forEach((d,k) => d.data = D[k].slice(a, b+1));
+        };
+        if (isl.length > 1) {
+          ranges.push(["Archive", slice(isl[0][0], isl[isl.length-2][1])]);
+          ranges.push(["Live",    slice(isl[isl.length-1][0], isl[isl.length-1][1])]);
+        }
+        const liveRun = isl.length ? isl[isl.length-1][1] - isl[isl.length-1][0] + 1 : 0;
+        const end = L.length - 1;
+        if (liveRun >=  3) ranges.push(["3M", slice(end-2,  end)]);
+        if (liveRun >=  6) ranges.push(["6M", slice(end-5,  end)]);
+        if (liveRun >= 12) ranges.push(["1Y", slice(end-11, end)]);
+        ranges.push(["All", slice(0, end)]);
       }
 
       const ctl = document.createElement("div"); ctl.className = "chartctl";
       const pills = document.createElement("div"); pills.className = "pills";
-      const def = isTime ? 6 : 0;
-      [["3M",3],["6M",6],["1Y",12],["All",0]].forEach(([t,m]) => {
+      ranges.forEach(([t, apply], i) => {
         const b = document.createElement("button");
-        b.className = "cpill" + (m===def ? " on" : "");
+        b.className = "cpill" + (i === ranges.length-1 ? " on" : "");
         b.textContent = t;
         b.onclick = () => {
           pills.querySelectorAll(".cpill").forEach(x => x.classList.remove("on"));
           b.classList.add("on");
-          setRange(m);
+          apply(); chart.update();
         };
         pills.appendChild(b);
       });
@@ -171,7 +200,6 @@ if (window.Chart) {
 
       ctl.appendChild(pills); ctl.appendChild(chips);
       box.parentNode.insertBefore(ctl, box);
-      if (def) setRange(def);
     }
   });
 }
