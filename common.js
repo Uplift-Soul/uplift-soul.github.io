@@ -21,7 +21,13 @@ function timeAgo(iso){
 /* fetch the shared data file (cache-busted) */
 function loadData(){
   return fetch("data.json?_="+Date.now())
-    .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); });
+    .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(data=>{
+      /* viewership ranking (current is sorted) — used to pick chart focus */
+      window.__VIEW_RANK = Object.fromEntries(
+        (data.current||[]).map((c,i)=>[c.category,i]));
+      return data;
+    });
 }
 
 /* update the "updated X ago" status pill if the page has one */
@@ -37,4 +43,62 @@ function showError(e){
   document.querySelectorAll(".js-err").forEach(x=>{
     x.innerHTML = '<div class="error">Couldn\'t load data.json ('+e.message+').</div>';
   });
+}
+
+
+/* ---- chart focus & mobile behaviour (auto-applies to every Chart.js chart) ---- */
+const IS_MOBILE = window.matchMedia && window.matchMedia("(max-width:760px)").matches;
+
+if (window.Chart) {
+
+  if (IS_MOBILE) {
+    const L = Chart.defaults.plugins.legend.labels;
+    L.boxWidth = 8; L.boxHeight = 8; L.padding = 8;
+    L.font = {family:"IBM Plex Sans", size:10};
+  }
+
+  /* start focused: only the 5 categories with the highest current
+     viewership are visible; the rest wait one tap away in the legend.
+     Bump charts (reversed y = ranks) are exempt. */
+  Chart.register({
+    id: "invstFocus",
+    afterInit(chart){
+      if (chart.$focusDone) return;
+      chart.$focusDone = true;
+      const sets = chart.data.datasets || [];
+      if (IS_MOBILE) sets.forEach(d => {
+        if (d.type !== "bar") { d.pointRadius = 0; d.borderWidth = 1.4; }
+      });
+      const reversed = chart.options && chart.options.scales &&
+                       chart.options.scales.y && chart.options.scales.y.reverse;
+      if (sets.length > 5 && !reversed) {
+        const rank = window.__VIEW_RANK || {};
+        const score = (d,i) => (d.label in rank) ? rank[d.label] : 1000 + i;
+        [...sets.keys()]
+          .sort((a,b) => score(sets[a],a) - score(sets[b],b))
+          .slice(5)
+          .forEach(i => chart.setDatasetVisibility(i, false));
+      }
+    }
+  });
+
+  /* legend behaviour:
+     tap a visible item  -> solo it (everything else hides)
+     tap a greyed item   -> add it to the view
+     tap the soloed item -> restore exactly what was visible before */
+  Chart.defaults.plugins.legend.onClick = (e, item, legend) => {
+    const chart = legend.chart, i = item.datasetIndex;
+    if (chart.$solo === i) {
+      chart.$soloPrev.forEach((v,k) => chart.setDatasetVisibility(k, v));
+      chart.$solo = null; chart.$soloPrev = null;
+    } else if (!chart.isDatasetVisible(i)) {
+      chart.setDatasetVisibility(i, true);
+    } else {
+      if (chart.$solo == null)
+        chart.$soloPrev = chart.data.datasets.map((_,k) => chart.isDatasetVisible(k));
+      chart.data.datasets.forEach((_,k) => chart.setDatasetVisibility(k, k === i));
+      chart.$solo = i;
+    }
+    chart.update();
+  };
 }
