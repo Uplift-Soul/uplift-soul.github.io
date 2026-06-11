@@ -132,8 +132,9 @@ if (window.Chart) {
         });
         const mx = days[days.length-1] || 0;
         const span = (a,b) => () => {
-          xs.min = new Date(a - 2*DAY).toISOString();
-          xs.max = new Date(b + 2*DAY).toISOString();
+          const o = chart.options.scales.x;
+          o.min = new Date(a - 2*DAY).toISOString();
+          o.max = new Date(b + 2*DAY).toISOString();
         };
         if (isl.length > 1) {
           ranges.push(["Archive", span(isl[0][0], isl[isl.length-2][1])]);
@@ -143,7 +144,10 @@ if (window.Chart) {
         if (liveLen >=  95*DAY) ranges.push(["3M", span(mx -  91*DAY, mx)]);
         if (liveLen >= 185*DAY) ranges.push(["6M", span(mx - 183*DAY, mx)]);
         if (liveLen >= 370*DAY) ranges.push(["1Y", span(mx - 365*DAY, mx)]);
-        ranges.push(["All", () => { xs.min = undefined; xs.max = undefined; }]);
+        ranges.push(["All", () => {
+          const o = chart.options.scales.x;
+          delete o.min; delete o.max;
+        }]);
       } else {
         const L = chart.data.labels.slice();
         const D = chart.data.datasets.map(d => d.data.slice());
