@@ -21,7 +21,13 @@ function timeAgo(iso){
 /* fetch the shared data file (cache-busted) */
 function loadData(){
   return fetch("data.json?_="+Date.now())
-    .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); });
+    .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(data=>{
+      /* viewership ranking (current is sorted) — used to pick chart focus */
+      window.__VIEW_RANK = Object.fromEntries(
+        (data.current||[]).map((c,i)=>[c.category,i]));
+      return data;
+    });
 }
 
 /* update the "updated X ago" status pill if the page has one */
@@ -36,5 +42,168 @@ function showError(e){
   if(el) el.textContent = "data unavailable";
   document.querySelectorAll(".js-err").forEach(x=>{
     x.innerHTML = '<div class="error">Couldn\'t load data.json ('+e.message+').</div>';
+  });
+}
+
+
+/* ---- chart focus & mobile behaviour (auto-applies to every Chart.js chart) ---- */
+const IS_MOBILE = window.matchMedia && window.matchMedia("(max-width:760px)").matches;
+
+if (window.Chart) {
+
+  if (IS_MOBILE) {
+    const L = Chart.defaults.plugins.legend.labels;
+    L.boxWidth = 8; L.boxHeight = 8; L.padding = 8;
+    L.font = {family:"IBM Plex Sans", size:10};
+  }
+
+  /* start focused: only the 5 categories with the highest current
+     viewership are visible; the rest wait one tap away in the legend.
+     Bump charts (reversed y = ranks) are exempt. */
+  Chart.register({
+    id: "invstFocus",
+    afterInit(chart){
+      if (chart.$focusDone) return;
+      chart.$focusDone = true;
+      const sets = chart.data.datasets || [];
+      if (IS_MOBILE) sets.forEach(d => {
+        if (d.type !== "bar") { d.pointRadius = 0; d.borderWidth = 1.4; }
+      });
+      const reversed = chart.options && chart.options.scales &&
+                       chart.options.scales.y && chart.options.scales.y.reverse;
+      if (sets.length > 5 && !reversed) {
+        const rank = window.__VIEW_RANK || {};
+        const score = (d,i) => (d.label in rank) ? rank[d.label] : 1000 + i;
+        [...sets.keys()]
+          .sort((a,b) => score(sets[a],a) - score(sets[b],b))
+          .slice(5)
+          .forEach(i => chart.setDatasetVisibility(i, false));
+      }
+    }
+  });
+
+  /* legend behaviour:
+     tap a visible item  -> solo it (everything else hides)
+     tap a greyed item   -> add it to the view
+     tap the soloed item -> restore exactly what was visible before */
+  Chart.defaults.plugins.legend.onClick = (e, item, legend) => {
+    const chart = legend.chart, i = item.datasetIndex;
+    if (chart.$solo === i) {
+      chart.$soloPrev.forEach((v,k) => chart.setDatasetVisibility(k, v));
+      chart.$solo = null; chart.$soloPrev = null;
+    } else if (!chart.isDatasetVisible(i)) {
+      chart.setDatasetVisibility(i, true);
+    } else {
+      if (chart.$solo == null)
+        chart.$soloPrev = chart.data.datasets.map((_,k) => chart.isDatasetVisible(k));
+      chart.data.datasets.forEach((_,k) => chart.setDatasetVisibility(k, k === i));
+      chart.$solo = i;
+    }
+    chart.update();
+  };
+}
+
+
+/* ---- era-aware range pills + category chips, injected above every line chart.
+   Pills derive from the data itself: with two data islands you get
+   Archive / Live / All; duration pills (3M/6M/1Y) appear automatically
+   once the live era is long enough to make them meaningful. ---- */
+if (window.Chart) {
+  Chart.register({
+    id: "invstControls",
+    afterInit(chart){
+      const xs = chart.options.scales && chart.options.scales.x;
+      const box = chart.canvas.closest(".chartbox");
+      if (!xs || !box || chart.$ctl) return;
+      chart.$ctl = true;
+      chart.options.plugins.legend.display = false;
+      const isTime = xs.type === "time";
+      const DAY = 864e5;
+      const ranges = [];
+
+      if (isTime) {
+        const days = [...new Set([].concat(...chart.data.datasets.map(
+          d => d.data.map(p => +new Date(p.x))
+        )))].sort((a,b) => a-b);
+        const isl = [];
+        days.forEach(t => {
+          const last = isl[isl.length-1];
+          if (!last || t - last[1] > 45*DAY) isl.push([t,t]); else last[1] = t;
+        });
+        const mx = days[days.length-1] || 0;
+        const span = (a,b) => () => {
+          const o = chart.options.scales.x;
+          o.min = new Date(a - 2*DAY).toISOString();
+          o.max = new Date(b + 2*DAY).toISOString();
+        };
+        if (isl.length > 1) {
+          ranges.push(["Archive", span(isl[0][0], isl[isl.length-2][1])]);
+          ranges.push(["Live",    span(isl[isl.length-1][0], mx)]);
+        }
+        const liveLen = isl.length ? isl[isl.length-1][1] - isl[isl.length-1][0] : 0;
+        if (liveLen >=  95*DAY) ranges.push(["3M", span(mx -  91*DAY, mx)]);
+        if (liveLen >= 185*DAY) ranges.push(["6M", span(mx - 183*DAY, mx)]);
+        if (liveLen >= 370*DAY) ranges.push(["1Y", span(mx - 365*DAY, mx)]);
+        ranges.push(["All", () => {
+          const o = chart.options.scales.x;
+          delete o.min; delete o.max;
+        }]);
+      } else {
+        const L = chart.data.labels.slice();
+        const D = chart.data.datasets.map(d => d.data.slice());
+        const has = i => D.some(d => d[i] != null);
+        const isl = [];
+        for (let i = 0; i < L.length; i++) if (has(i)) {
+          const last = isl[isl.length-1];
+          if (last && last[1] === i-1) last[1] = i; else isl.push([i,i]);
+        }
+        const slice = (a,b) => () => {
+          chart.data.labels = L.slice(a, b+1);
+          chart.data.datasets.forEach((d,k) => d.data = D[k].slice(a, b+1));
+        };
+        if (isl.length > 1) {
+          ranges.push(["Archive", slice(isl[0][0], isl[isl.length-2][1])]);
+          ranges.push(["Live",    slice(isl[isl.length-1][0], isl[isl.length-1][1])]);
+        }
+        const liveRun = isl.length ? isl[isl.length-1][1] - isl[isl.length-1][0] + 1 : 0;
+        const end = L.length - 1;
+        if (liveRun >=  3) ranges.push(["3M", slice(end-2,  end)]);
+        if (liveRun >=  6) ranges.push(["6M", slice(end-5,  end)]);
+        if (liveRun >= 12) ranges.push(["1Y", slice(end-11, end)]);
+        ranges.push(["All", slice(0, end)]);
+      }
+
+      const ctl = document.createElement("div"); ctl.className = "chartctl";
+      const pills = document.createElement("div"); pills.className = "pills";
+      ranges.forEach(([t, apply], i) => {
+        const b = document.createElement("button");
+        b.className = "cpill" + (i === ranges.length-1 ? " on" : "");
+        b.textContent = t;
+        b.onclick = () => {
+          pills.querySelectorAll(".cpill").forEach(x => x.classList.remove("on"));
+          b.classList.add("on");
+          apply(); chart.update();
+        };
+        pills.appendChild(b);
+      });
+
+      const chips = document.createElement("div"); chips.className = "chips";
+      chart.data.datasets.forEach((d,i) => {
+        const c = document.createElement("button");
+        c.className = "chip";
+        c.style.setProperty("--c", d.borderColor);
+        c.innerHTML = '<span class="dotc"></span>' + d.label;
+        const paint = () => c.classList.toggle("on", chart.isDatasetVisible(i));
+        c.onclick = () => {
+          chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
+          chart.update(); paint();
+        };
+        paint();
+        chips.appendChild(c);
+      });
+
+      ctl.appendChild(pills); ctl.appendChild(chips);
+      box.parentNode.insertBefore(ctl, box);
+    }
   });
 }
