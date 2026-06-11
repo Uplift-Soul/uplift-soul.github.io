@@ -146,4 +146,8 @@ footer{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);
 @media(max-width:760px){
   .kpis{grid-template-columns:repeat(2,1fr)}
   .row{grid-template-columns:24px 1fr 70px;gap:10px}
+  body{background-attachment:scroll}   /* mobile Safari repaint bug */
+  .wrap{padding:24px 14px 48px}
+  .panel{padding:16px}
+  .chartbox{height:300px}
 }
