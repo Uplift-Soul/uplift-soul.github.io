@@ -18,9 +18,11 @@ function timeAgo(iso){
   return Math.round(h/24)+"d ago";
 }
 
-/* fetch the shared data file (cache-busted) */
+/* fetch the shared data file. The buster is bucketed to 5 minutes so the
+   three pages share one cached copy while still picking up the 3-hourly
+   data refresh promptly. */
 function loadData(){
-  return fetch("data.json?_="+Date.now())
+  return fetch("data.json?_="+Math.floor(Date.now()/3e5))
     .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(data=>{
       /* viewership ranking (current is sorted) — used to pick chart focus */
@@ -30,10 +32,15 @@ function loadData(){
     });
 }
 
-/* update the "updated X ago" status pill if the page has one */
+/* update the "updated X ago" status pill if the page has one,
+   and keep it ticking so a left-open tab stays honest */
 function setUpdated(data){
   const el=document.getElementById("updated");
-  if(el) el.textContent = "updated "+timeAgo(data.latest_snapshot||data.generated_at);
+  if(!el) return;
+  const paint=()=>el.textContent = "updated "+timeAgo(data.latest_snapshot||data.generated_at);
+  paint();
+  clearInterval(setUpdated._t);
+  setUpdated._t=setInterval(paint, 60000);
 }
 
 /* on failure: mark the status unavailable and fill any error slots */
@@ -54,7 +61,7 @@ if (window.Chart) {
   if (IS_MOBILE) {
     const L = Chart.defaults.plugins.legend.labels;
     L.boxWidth = 8; L.boxHeight = 8; L.padding = 8;
-    L.font = {family:"IBM Plex Sans", size:10};
+    L.font = {family:"Inter", size:10};
   }
 
   /* start focused: only the 5 categories with the highest current
@@ -207,3 +214,26 @@ if (window.Chart) {
     }
   });
 }
+
+
+/* ---- visual layer: scroll reveal (presentation only — no data logic).
+   Panels and the footer fade/slide in as they enter the viewport, with a
+   stagger when several arrive together. Hidden states are gated behind
+   html.anim, so content stays fully visible without JS, and the whole
+   effect is skipped for prefers-reduced-motion. ---- */
+(() => {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (!("IntersectionObserver" in window)) return;
+  document.documentElement.classList.add("anim");
+  const io = new IntersectionObserver(entries => {
+    entries.filter(e => e.isIntersecting).forEach((e, i) => {
+      e.target.style.transitionDelay = (i * 90) + "ms";
+      e.target.classList.add("in");
+      io.unobserve(e.target);
+    });
+  }, { threshold: 0.1, rootMargin: "0px 0px -6% 0px" });
+  document.querySelectorAll(".panel, footer").forEach(el => {
+    el.classList.add("rv");
+    io.observe(el);
+  });
+})();

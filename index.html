@@ -3,8 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="INVST Gaming — Twitch category intelligence: live viewership, audience concentration and historical trends.">
+<meta name="theme-color" content="#0a0b13">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="INVST Gaming">
+<meta property="og:title" content="INVST Gaming — Overview">
+<meta property="og:description" content="Twitch category intelligence: live viewership, audience concentration and historical trends.">
+<meta property="og:url" content="https://invstgaming.co.uk/">
+<meta property="og:image" content="https://invstgaming.co.uk/og.png">
+<meta name="twitter:card" content="summary_large_image">
 <title>INVST Gaming — Overview</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -26,7 +38,10 @@
     <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
   </header>
 
-  <div class="kpis js-err" id="kpis"></div>
+  <div class="kpis js-err" id="kpis">
+    <div class="kpi skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
+    <div class="kpi skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
+  </div>
 
   <section class="panel trend">
     <h2>Viewership Trend</h2>
@@ -51,9 +66,9 @@ function renderKpis(data){
   const days=new Set((data.trend||[]).map(t=>t.day)).size;
   const cards=[
     {label:"Top Category", val:top?top.category:"—", sub:top?fullNum(top.viewership)+" viewers":"", sm:true},
-    {label:"Tracked Viewers (now)", val:fmt(totalNow), sub:"across top "+cur.length+" categories"},
-    {label:"Categories Live", val:cur.length, sub:"in latest snapshot"},
-    {label:"History Depth", val:days, sub:"days of data"},
+    {label:"Tracked Viewers (now)", val:fmt(totalNow), n:totalNow, f:fmt, sub:"across top "+cur.length+" categories"},
+    {label:"Categories Live", val:cur.length, n:cur.length, f:String, sub:"in latest snapshot"},
+    {label:"History Depth", val:days, n:days, f:String, sub:"days of data"},
   ];
   document.getElementById("kpis").innerHTML = cards.map(c=>`
     <div class="kpi">
@@ -61,28 +76,57 @@ function renderKpis(data){
       <div class="val ${c.sm?'sm':''}">${c.val}</div>
       <div class="sub">${c.sub||""}</div>
     </div>`).join("");
+  countUpKpis(cards);
+}
+
+/* visual only: tick numeric KPI values up from zero (skipped for reduced motion) */
+function countUpKpis(cards){
+  if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const els=document.querySelectorAll("#kpis .val");
+  cards.forEach((c,i)=>{
+    if(c.n==null || !els[i]) return;
+    const el=els[i], t0=performance.now(), dur=900;
+    const step=now=>{
+      const p=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-p,3);
+      el.textContent=c.f(Math.round(c.n*e));
+      if(p<1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
 }
 
 function renderTrend(data){
   const trend=data.trend||[];
   const cats=[...new Set(trend.map(t=>t.category))];
-  const datasets=cats.map((cat,i)=>({
+  const datasets=cats.map((cat,i)=>{
+    const pts=trend.filter(t=>t.category===cat).map(t=>({x:t.day,y:t.viewership}))
+      .sort((a,b)=>a.x<b.x?-1:a.x>b.x?1:0);
+    /* insert a null point inside collection gaps (>45 days) so spanGaps
+       actually breaks the line there — otherwise the curve is drawn straight
+       across the gap and loops back on itself */
+    for(let j=pts.length-1;j>0;j--)
+      if(new Date(pts[j].x)-new Date(pts[j-1].x) > 45*864e5)
+        pts.splice(j,0,{x:pts[j-1].x,y:null});
+    return {
     label:cat,
-    data:trend.filter(t=>t.category===cat).map(t=>({x:t.day,y:t.viewership})),
+    data:pts,
     borderColor:PALETTE[i%PALETTE.length],
     backgroundColor:PALETTE[i%PALETTE.length],
     borderWidth:1.8,pointRadius:0,pointHoverRadius:4,tension:.25,
     spanGaps:false,
-  }));
-  new Chart(document.getElementById("trend"),{
+  };});
+  const cv=document.getElementById("trend");
+  cv.setAttribute("role","img");
+  cv.setAttribute("aria-label","Line chart: daily Twitch viewership for the top "+cats.length+" categories.");
+  new Chart(cv,{
     type:"line",
     data:{datasets},
     options:{
       responsive:true,maintainAspectRatio:false,
       interaction:{mode:"nearest",intersect:false},
       plugins:{
-        legend:{labels:{color:"#cfcfe0",font:{family:"IBM Plex Sans",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
-        tooltip:{backgroundColor:"#11111b",borderColor:"#2a2a3a",borderWidth:1,
+        legend:{labels:{color:"#cfcfe0",font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
+        tooltip:{backgroundColor:"#12141f",borderColor:"rgba(255,255,255,.1)",borderWidth:1,cornerRadius:10,padding:10,
           titleFont:{family:"IBM Plex Mono"},bodyFont:{family:"IBM Plex Mono"},
           callbacks:{label:c=>` ${c.dataset.label}: ${fullNum(c.parsed.y)}`}}
       },
@@ -112,15 +156,18 @@ function renderConcentration(data){
     borderWidth:1.8,pointRadius:2.5,pointHoverRadius:5,tension:.25,
     spanGaps:false,
   }));
-  new Chart(document.getElementById("conc"),{
+  const cv=document.getElementById("conc");
+  cv.setAttribute("role","img");
+  cv.setAttribute("aria-label","Line chart: monthly share of each category's viewers held by its top 10 streamers.");
+  new Chart(cv,{
     type:"line",
     data:{labels,datasets},
     options:{
       responsive:true,maintainAspectRatio:false,
       interaction:{mode:"nearest",intersect:false},
       plugins:{
-        legend:{labels:{color:"#cfcfe0",font:{family:"IBM Plex Sans",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
-        tooltip:{backgroundColor:"#11111b",borderColor:"#2a2a3a",borderWidth:1,
+        legend:{labels:{color:"#cfcfe0",font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
+        tooltip:{backgroundColor:"#12141f",borderColor:"rgba(255,255,255,.1)",borderWidth:1,cornerRadius:10,padding:10,
           titleFont:{family:"IBM Plex Mono"},bodyFont:{family:"IBM Plex Mono"},
           callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y!=null?c.parsed.y.toFixed(1)+'%':'—'}`}}
       },
