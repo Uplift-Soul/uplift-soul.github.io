@@ -3,8 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="INVST Gaming — historical Twitch trends: category rankings over time and the biggest viewership risers and fallers.">
+<meta name="theme-color" content="#0a0b13">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="INVST Gaming">
+<meta property="og:title" content="INVST Gaming — Historical">
+<meta property="og:description" content="Historical Twitch trends: category rankings over time and the biggest viewership risers and fallers.">
+<meta property="og:url" content="https://invstgaming.co.uk/historical.html">
+<meta property="og:image" content="https://invstgaming.co.uk/og.png">
+<meta name="twitter:card" content="summary_large_image">
 <title>INVST Gaming — Historical</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
@@ -34,7 +46,10 @@
   <section class="panel alt">
     <h2>Biggest Movers</h2>
     <div class="cap" id="movers-cap">Risers and fallers by average viewership across the historical window.</div>
-    <div id="movers" class="js-err"><div class="loading">Loading movers…</div></div>
+    <div id="movers" class="js-err"><div class="skelrows" aria-hidden="true">
+      <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
+      <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
+    </div></div>
   </section>
 
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi</footer>
@@ -57,15 +72,18 @@ function renderRankings(data){
     borderWidth:2.4,pointRadius:3,pointHoverRadius:6,tension:.3,
     spanGaps:false,
   }));
-  new Chart(document.getElementById("bump"),{
+  const cv=document.getElementById("bump");
+  cv.setAttribute("role","img");
+  cv.setAttribute("aria-label","Bump chart: monthly Twitch category rankings — rank 1 at the top.");
+  new Chart(cv,{
     type:"line",
     data:{labels,datasets},
     options:{
       responsive:true,maintainAspectRatio:false,
       interaction:{mode:"nearest",intersect:false},
       plugins:{
-        legend:{labels:{color:"#cfcfe0",font:{family:"IBM Plex Sans",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
-        tooltip:{backgroundColor:"#11111b",borderColor:"#2a2a3a",borderWidth:1,
+        legend:{labels:{color:"#cfcfe0",font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
+        tooltip:{backgroundColor:"#12141f",borderColor:"rgba(255,255,255,.1)",borderWidth:1,cornerRadius:10,padding:10,
           titleFont:{family:"IBM Plex Mono"},bodyFont:{family:"IBM Plex Mono"},
           callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y!=null?'#'+c.parsed.y:'—'}`}}
       },
