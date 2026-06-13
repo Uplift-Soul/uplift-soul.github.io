@@ -67,8 +67,15 @@ if (window.Chart) {
   /* coordinated chart entrance that matches the site's easing, so canvases
      ease in with the panels around them instead of snapping. Disabled under
      reduced motion. */
-  const REDUCE = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  Chart.defaults.animation = REDUCE ? false : { duration: 900, easing: "easeOutQuart" };
+  /* Chart animations are disabled. Chart.js 4.4.1's animator throws
+     "this._fn is not a function" (Animation.tick → Animator._update) when our
+     line charts transition: the range pills swap in datasets with different
+     point counts and the gap-break logic inserts null points, which trips the
+     interpolator. The thrown tick kills the animation loop, after which every
+     update() changed the data but never repainted — so charts froze after a
+     scroll and controls looked dead. Rendering without animation sidesteps the
+     bug entirely and applies control changes instantly. */
+  Chart.defaults.animation = false;
 
   if (IS_MOBILE) {
     const L = Chart.defaults.plugins.legend.labels;
