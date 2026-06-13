@@ -1,0 +1,10 @@
+# Backend / Pi-only — must NOT be served publicly by GitHub Pages
+publish.py
+.env
+.env.*
+
+# Python noise (in case the script is run/edited locally)
+__pycache__/
+*.pyc
+.venv/
+venv/
