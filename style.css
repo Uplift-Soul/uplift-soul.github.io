@@ -30,6 +30,11 @@
 
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
+
+/* smooth cross-document fade between pages (progressive enhancement —
+   ignored by browsers without the View Transitions API) */
+@view-transition{ navigation: auto; }
+::view-transition-old(root),::view-transition-new(root){animation-duration:.32s}
 body{
   background:var(--bg);
   color:var(--text);
@@ -318,6 +323,7 @@ html.anim .rv.in{opacity:1;transform:none;
     transition-duration:.01ms!important;transition-delay:0ms!important;
   }
   html{scroll-behavior:auto}
+  ::view-transition-old(root),::view-transition-new(root){animation:none}
 }
 
 /* ---- scale up to desktop (mobile-first base above) ---- */

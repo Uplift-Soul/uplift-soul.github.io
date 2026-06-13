@@ -62,6 +62,12 @@ const IS_MOBILE = window.matchMedia && window.matchMedia("(max-width:760px)").ma
 
 if (window.Chart) {
 
+  /* coordinated chart entrance that matches the site's easing, so canvases
+     ease in with the panels around them instead of snapping. Disabled under
+     reduced motion. */
+  const REDUCE = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  Chart.defaults.animation = REDUCE ? false : { duration: 900, easing: "easeOutQuart" };
+
   if (IS_MOBILE) {
     const L = Chart.defaults.plugins.legend.labels;
     L.boxWidth = 8; L.boxHeight = 8; L.padding = 8;
