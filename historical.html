@@ -132,10 +132,18 @@ function renderMovers(data){
   requestAnimationFrame(()=>host.querySelectorAll(".fill").forEach(x=>x.style.width=x.dataset.w+"%"));
 }
 
+function refreshHistorical(data){
+  document.querySelectorAll(".chartctl").forEach(e=>e.remove());
+  const b=Chart.getChart("bump"); if(b) b.destroy();
+  renderRankings(data);
+  renderMovers(data);
+}
+
 loadData("history.json").then(data=>{
   setUpdated(data);
   renderRankings(data);
   renderMovers(data);
+  startAutoRefresh("history.json", data, refreshHistorical);
 }).catch(showError);
 </script>
 </body>
