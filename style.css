@@ -72,9 +72,7 @@ body::after{
 
 /* ---- nav: floating glass segmented control ---- */
 .nav{
-  /* deliberately NOT sticky: a floating sticky bar sat on top of the chart
-     range/category controls when they scrolled under it and stole their
-     clicks. Jump-from-anywhere is covered by the ⌘K command palette instead. */
+  position:sticky;top:12px;z-index:50;
   display:flex;flex-wrap:wrap;width:max-content;max-width:100%;gap:4px;
   padding:5px;margin-bottom:30px;
   border:1px solid var(--line);border-radius:999px;
