@@ -1,9 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#0b0d12"/>
-  <line x1="17" y1="22" x2="17" y2="52" stroke="#2dd4a0" stroke-width="2.5"/>
-  <rect x="12.5" y="36" width="9" height="11" fill="#2dd4a0"/>
-  <line x1="32" y1="15" x2="32" y2="46" stroke="#2dd4a0" stroke-width="2.5"/>
-  <rect x="27.5" y="25" width="9" height="13" fill="#2dd4a0"/>
-  <line x1="47" y1="8" x2="47" y2="38" stroke="#a970ff" stroke-width="2.5"/>
-  <rect x="42.5" y="14" width="9" height="15" fill="#a970ff"/>
+  <defs>
+    <linearGradient id="chk" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#2dd4a0"/>
+      <stop offset="1" stop-color="#7ee8c9"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#0d0f17"/>
+  <rect x=".5" y=".5" width="63" height="63" rx="15.5" fill="none" stroke="#fff" stroke-opacity=".06"/>
+  <circle cx="32" cy="32" r="22" fill="#2dd4a0" opacity=".12"/>
+  <polyline points="16,32 27,45 49,17" fill="none" stroke="url(#chk)"
+            stroke-width="8" stroke-linecap="square" stroke-linejoin="miter"/>
 </svg>

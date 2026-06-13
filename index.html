@@ -45,6 +45,7 @@
 
   <section class="panel trend">
     <h2>Viewership Trend</h2>
+    <div class="cap">Average concurrent viewers per category, smoothed to a 7-day rolling average. The break in the lines is the gap before the live pipeline began collecting.</div>
     <div class="chartbox"><canvas id="trend"></canvas></div>
   </section>
 
@@ -114,23 +115,38 @@ function countUpKpis(cards){
 function renderTrend(data){
   const trend=data.trend||[];
   const cats=[...new Set(trend.map(t=>t.category))];
+  const W=7; // trailing window: smooths daily jitter into a readable trend line
   const datasets=cats.map((cat,i)=>{
-    const pts=trend.filter(t=>t.category===cat).map(t=>({x:t.day,y:t.viewership}))
+    const raw=trend.filter(t=>t.category===cat).map(t=>({x:t.day,y:t.viewership}))
       .sort((a,b)=>a.x<b.x?-1:a.x>b.x?1:0);
-    /* insert a null point inside collection gaps (>45 days) so spanGaps
-       actually breaks the line there — otherwise the curve is drawn straight
-       across the gap and loops back on itself */
-    for(let j=pts.length-1;j>0;j--)
-      if(new Date(pts[j].x)-new Date(pts[j-1].x) > 45*864e5)
-        pts.splice(j,0,{x:pts[j-1].x,y:null});
+    /* smooth within each collection era (7-day rolling average) and break the
+       line across gaps (>45 days), so the curve reads as a trend instead of a
+       seismograph and never interpolates across the archive→live gap */
+    const data=[];
+    let seg=[];
+    const emit=()=>{
+      for(let k=0;k<seg.length;k++){
+        let s=0,n=0;
+        for(let m=Math.max(0,k-W+1);m<=k;m++){ s+=seg[m].y; n++; }
+        data.push({x:seg[k].x, y:Math.round(s/n)});
+      }
+    };
+    for(const p of raw){
+      if(seg.length && (new Date(p.x)-new Date(seg[seg.length-1].x) > 45*864e5)){
+        emit(); data.push({x:p.x, y:null}); seg=[];
+      }
+      seg.push(p);
+    }
+    emit();
     return {
-    label:cat,
-    data:pts,
-    borderColor:PALETTE[i%PALETTE.length],
-    backgroundColor:PALETTE[i%PALETTE.length],
-    borderWidth:1.8,pointRadius:0,pointHoverRadius:4,tension:.25,
-    spanGaps:false,
-  };});
+      label:cat,
+      data,
+      borderColor:PALETTE[i%PALETTE.length],
+      backgroundColor:PALETTE[i%PALETTE.length],
+      borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:.35,
+      spanGaps:false,
+    };
+  });
   const cv=document.getElementById("trend");
   cv.setAttribute("role","img");
   cv.setAttribute("aria-label","Line chart: daily Twitch viewership for the top "+cats.length+" categories.");
@@ -198,11 +214,23 @@ function renderConcentration(data){
   });
 }
 
+function refreshOverview(data){
+  renderKpis(data);
+  /* rebuild charts in place; clear the injected range/chip controls first so the
+     controls plugin doesn't append a duplicate set */
+  document.querySelectorAll(".chartctl").forEach(e=>e.remove());
+  const t=Chart.getChart("trend"); if(t) t.destroy();
+  const c=Chart.getChart("conc");  if(c) c.destroy();
+  renderTrend(data);
+  renderConcentration(data);
+}
+
 loadData("overview.json").then(data=>{
   setUpdated(data);
   renderKpis(data);
   renderTrend(data);
   renderConcentration(data);
+  startAutoRefresh("overview.json", data, refreshOverview);
 }).catch(showError);
 </script>
 </body>
