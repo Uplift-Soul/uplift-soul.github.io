@@ -32,6 +32,8 @@ function loadData(primary){
     /* viewership ranking (current is sorted) — used to pick chart focus */
     window.__VIEW_RANK = Object.fromEntries(
       (data.current||[]).map((c,i)=>[c.category,i]));
+    /* category list for the command palette (empty on pages without `current`) */
+    if((data.current||[]).length) window.__CATS = data.current.map(c=>c.category);
     return data;
   });
 }
@@ -246,4 +248,171 @@ if (window.Chart) {
     el.classList.add("rv");
     io.observe(el);
   });
+})();
+
+
+/* ============================================================================
+   Terminal UX layer (presentation only): live auto-refresh, ⌘K command
+   palette, and a comfortable/compact density toggle.
+   ============================================================================ */
+
+/* --- live auto-refresh -------------------------------------------------------
+   Re-poll the page's data file on an interval; when a newer snapshot lands,
+   update the "updated" pill and hand the fresh data to the page's renderer so
+   an open tab stays live without a manual reload. No-op until the snapshot
+   actually changes, so it's cheap between the 3-hourly data cycles. */
+function startAutoRefresh(file, initial, onChange, intervalMs){
+  let lastSnap = (initial && (initial.latest_snapshot || initial.generated_at)) || null;
+  setInterval(() => {
+    loadData(file).then(data => {
+      const snap = data.latest_snapshot || data.generated_at;
+      if (snap && snap !== lastSnap){
+        lastSnap = snap;
+        setUpdated(data);
+        try { onChange(data); } catch(e){ /* keep polling even if a render throws */ }
+      }
+    }).catch(()=>{});
+  }, intervalMs || 90000);
+}
+
+/* briefly highlight a value that just changed on refresh */
+function flash(el){
+  if(!el) return;
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+}
+
+
+/* --- density toggle (comfortable | compact), persisted ---------------------- */
+(() => {
+  const KEY = "invst-density", root = document.documentElement;
+  const set = d => { root.setAttribute("data-density", d); try{ localStorage.setItem(KEY, d); }catch(e){} };
+  let cur = "comfortable";
+  try { cur = localStorage.getItem(KEY) || cur; } catch(e){}
+  set(cur);                                   // applied before paint where possible
+  window.__toggleDensity = () =>
+    set(root.getAttribute("data-density") === "compact" ? "comfortable" : "compact");
+})();
+
+
+/* --- nav tools (⌘K trigger + density button) + command palette -------------- */
+(() => {
+  const ICON_SEARCH =
+    '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  const ICON_DENSITY =
+    '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2.5" y1="4" x2="13.5" y2="4"/><line x1="2.5" y1="8" x2="13.5" y2="8"/><line x1="2.5" y1="12" x2="13.5" y2="12"/></g></svg>';
+
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+
+  /* ---- palette ---- */
+  let root, input, list, items = [], active = 0, open = false;
+  const PAGES = [
+    {label:"Overview",   hint:"Trends & concentration", href:"index.html"},
+    {label:"Live",       hint:"Top categories now",     href:"live.html"},
+    {label:"Historical", hint:"Rankings & movers",      href:"historical.html"},
+  ];
+
+  const buildPalette = () => {
+    root = document.createElement("div");
+    root.className = "cmdk";
+    root.innerHTML =
+      '<div class="cmdk-backdrop"></div>'+
+      '<div class="cmdk-panel" role="dialog" aria-modal="true" aria-label="Command palette">'+
+        '<input class="cmdk-input" type="text" placeholder="Jump to a page or category…" aria-label="Search" autocomplete="off" spellcheck="false">'+
+        '<div class="cmdk-list" role="listbox"></div>'+
+        '<div class="cmdk-foot"><span><b>↑↓</b> navigate</span><span><b>↵</b> open</span><span><b>esc</b> close</span></div>'+
+      '</div>';
+    document.body.appendChild(root);
+    input = root.querySelector(".cmdk-input");
+    list  = root.querySelector(".cmdk-list");
+    root.querySelector(".cmdk-backdrop").addEventListener("click", close);
+    input.addEventListener("input", render);
+    input.addEventListener("keydown", onKey);
+  };
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const allItems = () => PAGES.concat((window.__CATS || []).map(c =>
+    ({label:c, hint:"Open on Live", href:"live.html#"+encodeURIComponent(c), cat:true})));
+
+  const render = () => {
+    const q = input.value.trim().toLowerCase();
+    items = allItems().filter(it => !q || it.label.toLowerCase().includes(q));
+    active = 0;
+    list.innerHTML = items.map((it,i) =>
+      `<div class="cmdk-item${i===0?" active":""}" data-i="${i}" role="option">
+         <span class="cmdk-ic">${it.cat?"#":"›"}</span>
+         <span class="cmdk-lbl">${esc(it.label)}</span>
+         <span class="cmdk-hint">${esc(it.hint)}</span>
+       </div>`).join("") || '<div class="cmdk-empty">No matches</div>';
+    list.querySelectorAll(".cmdk-item").forEach(el => {
+      el.addEventListener("mousemove", () => setActive(+el.dataset.i));
+      el.addEventListener("click", () => activate(+el.dataset.i));
+    });
+  };
+
+  const setActive = i => {
+    active = i;
+    const els = list.querySelectorAll(".cmdk-item");
+    els.forEach((el,k) => el.classList.toggle("active", k===i));
+    if(els[i]) els[i].scrollIntoView({block:"nearest"});
+  };
+
+  const activate = i => {
+    const it = items[i]; if(!it) return;
+    close();
+    const here = location.pathname.split("/").pop() || "index.html";
+    const [path, hash] = it.href.split("#");
+    if(path === here){ if(hash) location.hash = hash; return; }   // same page → just set hash
+    location.href = it.href;
+  };
+
+  const onKey = e => {
+    if(e.key==="ArrowDown"){ e.preventDefault(); setActive(Math.min(items.length-1, active+1)); }
+    else if(e.key==="ArrowUp"){ e.preventDefault(); setActive(Math.max(0, active-1)); }
+    else if(e.key==="Enter"){ e.preventDefault(); activate(active); }
+    else if(e.key==="Escape"){ e.preventDefault(); close(); }
+  };
+
+  const openPalette = () => {
+    if(!root) buildPalette();
+    open = true; root.classList.add("on");
+    input.value = ""; render(); input.focus();
+  };
+  function close(){ if(root){ open=false; root.classList.remove("on"); } }
+
+  document.addEventListener("keydown", e => {
+    if((e.ctrlKey||e.metaKey) && (e.key==="k"||e.key==="K")){ e.preventDefault(); open ? close() : openPalette(); }
+  });
+
+  /* ---- inject the nav tools (search + density) ---- */
+  const buildTools = () => {
+    const nav = document.querySelector(".nav");
+    if(!nav || nav.querySelector(".navtools")) return;
+    const tools = document.createElement("span");
+    tools.className = "navtools";
+
+    const search = document.createElement("button");
+    search.type = "button"; search.className = "navtool";
+    search.setAttribute("aria-label", "Search (press "+(isMac?"⌘":"Ctrl")+"K)");
+    search.title = "Search · "+(isMac?"⌘":"Ctrl")+"K";
+    search.innerHTML = ICON_SEARCH + '<span class="kbd">'+(isMac?"⌘":"Ctrl")+'K</span>';
+    search.onclick = openPalette;
+
+    const dens = document.createElement("button");
+    dens.type = "button"; dens.className = "navtool";
+    const paintDens = () => {
+      const d = document.documentElement.getAttribute("data-density");
+      dens.setAttribute("aria-pressed", d === "compact" ? "true" : "false");
+      dens.title = "Density: "+d;
+      dens.setAttribute("aria-label", "Toggle density (currently "+d+")");
+    };
+    dens.innerHTML = ICON_DENSITY;
+    dens.onclick = () => { window.__toggleDensity(); paintDens(); };
+    paintDens();
+
+    tools.appendChild(search); tools.appendChild(dens);
+    nav.appendChild(tools);
+  };
+
+  if(document.readyState !== "loading") buildTools();
+  else document.addEventListener("DOMContentLoaded", buildTools);
 })();

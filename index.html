@@ -214,11 +214,23 @@ function renderConcentration(data){
   });
 }
 
+function refreshOverview(data){
+  renderKpis(data);
+  /* rebuild charts in place; clear the injected range/chip controls first so the
+     controls plugin doesn't append a duplicate set */
+  document.querySelectorAll(".chartctl").forEach(e=>e.remove());
+  const t=Chart.getChart("trend"); if(t) t.destroy();
+  const c=Chart.getChart("conc");  if(c) c.destroy();
+  renderTrend(data);
+  renderConcentration(data);
+}
+
 loadData("overview.json").then(data=>{
   setUpdated(data);
   renderKpis(data);
   renderTrend(data);
   renderConcentration(data);
+  startAutoRefresh("overview.json", data, refreshOverview);
 }).catch(showError);
 </script>
 </body>

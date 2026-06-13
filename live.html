@@ -64,6 +64,7 @@ function renderCats(data){
   const el=document.getElementById("cats");
   if(!cur.length){el.innerHTML='<div class="error">No current data yet.</div>';return;}
   const max=Math.max(...cur.map(c=>c.viewership||0))||1;
+  const prevByCat=(data.previous&&data.previous.by_category)||{};
   el.innerHTML = '<div class="rows">'+cur.map((c,i)=>`
     <div class="row xrow" data-cat="${c.category}" role="button" tabindex="0" aria-expanded="false" style="--i:${i}">
       <div class="rank">${String(c.rank).padStart(2,'0')}</div>
@@ -74,9 +75,28 @@ function renderCats(data){
         </div>
         <div class="track"><div class="fill" data-w="${(c.viewership/max*100).toFixed(1)}"></div></div>
       </div>
-      <div class="views">${fmt(c.viewership)}</div>
+      <div class="views"><span class="vval">${fmt(c.viewership)}</span>${moveHtml(c,prevByCat)}</div>
     </div>`).join("")+'</div>';
   requestAnimationFrame(()=>el.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%"));
+  /* flash any viewer counts that changed since the previous render (auto-refresh) */
+  const prev=renderCats._last||{};
+  cur.forEach(c=>{
+    if(prev[c.category]!=null && prev[c.category]!==c.viewership){
+      const row=el.querySelector('.xrow[data-cat="'+CSS.escape(c.category)+'"]');
+      flash(row && row.querySelector(".views"));
+    }
+  });
+  renderCats._last=Object.fromEntries(cur.map(c=>[c.category,c.viewership]));
+}
+
+/* viewership change vs the previous snapshot, shown under each category's count */
+function moveHtml(c, prevByCat){
+  const before=prevByCat[c.category];
+  if(before==null||before===0) return "";
+  const d=(c.viewership-before)/before*100;
+  if(!isFinite(d)||Math.abs(d)<0.05) return "";
+  const up=d>0;
+  return `<span class="vmove ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(d).toFixed(1)}%</span>`;
 }
 
 function renderFragility(data){
@@ -156,12 +176,37 @@ function wireExpand(el, data){
   });
 }
 
-loadData("live.json").then(data=>{
-  setUpdated(data);
+function renderLive(data){
+  /* preserve which category is expanded across an auto-refresh re-render */
+  const open=document.querySelector("#cats .xrow.open");
+  const openCat=open?open.dataset.cat:null;
   renderCats(data);
   renderFragility(data);
   wireExpand(document.getElementById("cats"), data);
   wireExpand(document.getElementById("frag"), data);
+  if(openCat){
+    const row=document.querySelector('#cats .xrow[data-cat="'+CSS.escape(openCat)+'"]');
+    if(row) row.click();
+  }
+}
+
+/* deep link: live.html#<category> opens and scrolls to that category */
+function openCategoryByHash(){
+  const cat=decodeURIComponent((location.hash||"").replace(/^#/,""));
+  if(!cat) return;
+  const row=document.querySelector('#cats .xrow[data-cat="'+CSS.escape(cat)+'"]');
+  if(row){
+    if(!row.classList.contains("open")) row.click();
+    row.scrollIntoView({behavior:"smooth", block:"center"});
+  }
+}
+window.addEventListener("hashchange", openCategoryByHash);
+
+loadData("live.json").then(data=>{
+  setUpdated(data);
+  renderLive(data);
+  openCategoryByHash();
+  startAutoRefresh("live.json", data, renderLive);
 }).catch(showError);
 </script>
 </body>
