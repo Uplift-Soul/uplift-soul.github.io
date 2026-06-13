@@ -132,7 +132,7 @@ function renderMovers(data){
   requestAnimationFrame(()=>host.querySelectorAll(".fill").forEach(x=>x.style.width=x.dataset.w+"%"));
 }
 
-loadData().then(data=>{
+loadData("history.json").then(data=>{
   setUpdated(data);
   renderRankings(data);
   renderMovers(data);
