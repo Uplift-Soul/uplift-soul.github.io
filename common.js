@@ -10,22 +10,6 @@ const fmt = n => {
 };
 const fullNum = n => (Number(n)||0).toLocaleString("en-GB");
 
-/* Force a chart's canvas to re-composite after an update. On pages with
-   scroll-coupled fixed layers (the dot-grid / aurora / fixed background) some
-   browsers leave the canvas on a stale GPU layer once the page has been
-   scrolled: Chart.js redraws the 2D backing store correctly but the on-screen
-   texture isn't re-uploaded, so range pills / category chips look dead even
-   though they fired (highlight changes, chart doesn't). Window resize doesn't
-   help because the chart's container is a fixed height, so Chart.js sees no
-   size change. Toggling a no-op transform invalidates the layer and pushes the
-   fresh pixels to the screen. */
-function repaintChart(chart){
-  const c = chart && chart.canvas;
-  if(!c) return;
-  c.style.transform = "translateZ(0)";
-  requestAnimationFrame(() => requestAnimationFrame(() => { c.style.transform = ""; }));
-}
-
 function timeAgo(iso){
   if(!iso) return "unknown";
   const d=new Date(iso), now=new Date(), mins=Math.round((now-d)/60000);
@@ -83,8 +67,15 @@ if (window.Chart) {
   /* coordinated chart entrance that matches the site's easing, so canvases
      ease in with the panels around them instead of snapping. Disabled under
      reduced motion. */
-  const REDUCE = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  Chart.defaults.animation = REDUCE ? false : { duration: 900, easing: "easeOutQuart" };
+  /* Chart animations are disabled. Chart.js 4.4.1's animator throws
+     "this._fn is not a function" (Animation.tick → Animator._update) when our
+     line charts transition: the range pills swap in datasets with different
+     point counts and the gap-break logic inserts null points, which trips the
+     interpolator. The thrown tick kills the animation loop, after which every
+     update() changed the data but never repainted — so charts froze after a
+     scroll and controls looked dead. Rendering without animation sidesteps the
+     bug entirely and applies control changes instantly. */
+  Chart.defaults.animation = false;
 
   if (IS_MOBILE) {
     const L = Chart.defaults.plugins.legend.labels;
@@ -135,7 +126,6 @@ if (window.Chart) {
       chart.$solo = i;
     }
     chart.update();
-    repaintChart(chart);
   };
 }
 
@@ -219,7 +209,6 @@ if (window.Chart) {
           pills.querySelectorAll(".cpill").forEach(x => x.classList.remove("on"));
           b.classList.add("on");
           apply(); chart.update();
-          repaintChart(chart);
         };
         pills.appendChild(b);
       });
@@ -234,7 +223,6 @@ if (window.Chart) {
         c.onclick = () => {
           chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
           chart.update(); paint();
-          repaintChart(chart);
         };
         paint();
         chips.appendChild(c);
