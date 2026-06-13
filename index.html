@@ -64,9 +64,16 @@ function renderKpis(data){
   const totalNow=cur.reduce((s,c)=>s+(c.viewership||0),0);
   const top=cur[0];
   const days=new Set((data.trend||[]).map(t=>t.day)).size;
+
+  /* deltas vs the previous snapshot, when the backend provides one */
+  const prev=data.previous||null;
+  const pct=(now,before)=> (before==null||before===0||!isFinite(before)) ? null : (now-before)/before*100;
+  const totalDelta = prev ? pct(totalNow, prev.total) : null;
+  const topDelta = (prev && top) ? pct(top.viewership, (prev.by_category||{})[top.category]) : null;
+
   const cards=[
-    {label:"Top Category", val:top?top.category:"—", sub:top?fullNum(top.viewership)+" viewers":"", sm:true},
-    {label:"Tracked Viewers (now)", val:fmt(totalNow), n:totalNow, f:fmt, sub:"across top "+cur.length+" categories"},
+    {label:"Top Category", val:top?top.category:"—", sub:top?fullNum(top.viewership)+" viewers":"", sm:true, delta:topDelta},
+    {label:"Tracked Viewers (now)", val:fmt(totalNow), n:totalNow, f:fmt, sub:"across top "+cur.length+" categories", delta:totalDelta},
     {label:"Categories Live", val:cur.length, n:cur.length, f:String, sub:"in latest snapshot"},
     {label:"History Depth", val:days, n:days, f:String, sub:"days of data"},
   ];
@@ -74,9 +81,18 @@ function renderKpis(data){
     <div class="kpi">
       <div class="label">${c.label}</div>
       <div class="val ${c.sm?'sm':''}">${c.val}</div>
+      ${deltaHtml(c.delta)}
       <div class="sub">${c.sub||""}</div>
     </div>`).join("");
   countUpKpis(cards);
+}
+
+/* small coloured "vs last snapshot" badge; blank when no delta is available */
+function deltaHtml(d){
+  if(d==null || !isFinite(d)) return "";
+  if(Math.abs(d) < 0.05) return `<div class="delta flat">● no change <span>vs last snapshot</span></div>`;
+  const up=d>0;
+  return `<div class="delta ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(d).toFixed(1)}% <span>vs last snapshot</span></div>`;
 }
 
 /* visual only: tick numeric KPI values up from zero (skipped for reduced motion) */
@@ -182,7 +198,7 @@ function renderConcentration(data){
   });
 }
 
-loadData().then(data=>{
+loadData("overview.json").then(data=>{
   setUpdated(data);
   renderKpis(data);
   renderTrend(data);

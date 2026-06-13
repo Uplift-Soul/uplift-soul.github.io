@@ -18,18 +18,22 @@ function timeAgo(iso){
   return Math.round(h/24)+"d ago";
 }
 
-/* fetch the shared data file. The buster is bucketed to 5 minutes so the
-   three pages share one cached copy while still picking up the 3-hourly
-   data refresh promptly. */
-function loadData(){
-  return fetch("data.json?_="+Math.floor(Date.now()/3e5))
-    .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
-    .then(data=>{
-      /* viewership ranking (current is sorted) — used to pick chart focus */
-      window.__VIEW_RANK = Object.fromEntries(
-        (data.current||[]).map((c,i)=>[c.category,i]));
-      return data;
-    });
+/* Fetch a page's data slice (live/overview/history.json), falling back to the
+   full data.json if the slice isn't published yet — so the site keeps working
+   before the backend starts emitting the split files. The buster is bucketed to
+   5 minutes so pages share a cached copy while still catching the 3-hourly refresh. */
+function loadData(primary){
+  const bust = Math.floor(Date.now()/3e5);
+  const grab = f => fetch(f+"?_="+bust)
+    .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); });
+  let p = grab(primary || "data.json");
+  if(primary) p = p.catch(()=>grab("data.json"));
+  return p.then(data=>{
+    /* viewership ranking (current is sorted) — used to pick chart focus */
+    window.__VIEW_RANK = Object.fromEntries(
+      (data.current||[]).map((c,i)=>[c.category,i]));
+    return data;
+  });
 }
 
 /* update the "updated X ago" status pill if the page has one,

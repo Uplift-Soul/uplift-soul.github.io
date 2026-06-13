@@ -156,7 +156,7 @@ function wireExpand(el, data){
   });
 }
 
-loadData().then(data=>{
+loadData("live.json").then(data=>{
   setUpdated(data);
   renderCats(data);
   renderFragility(data);
