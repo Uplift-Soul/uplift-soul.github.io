@@ -10,6 +10,22 @@ const fmt = n => {
 };
 const fullNum = n => (Number(n)||0).toLocaleString("en-GB");
 
+/* Force a chart's canvas to re-composite after an update. On pages with
+   scroll-coupled fixed layers (the dot-grid / aurora / fixed background) some
+   browsers leave the canvas on a stale GPU layer once the page has been
+   scrolled: Chart.js redraws the 2D backing store correctly but the on-screen
+   texture isn't re-uploaded, so range pills / category chips look dead even
+   though they fired (highlight changes, chart doesn't). Window resize doesn't
+   help because the chart's container is a fixed height, so Chart.js sees no
+   size change. Toggling a no-op transform invalidates the layer and pushes the
+   fresh pixels to the screen. */
+function repaintChart(chart){
+  const c = chart && chart.canvas;
+  if(!c) return;
+  c.style.transform = "translateZ(0)";
+  requestAnimationFrame(() => requestAnimationFrame(() => { c.style.transform = ""; }));
+}
+
 function timeAgo(iso){
   if(!iso) return "unknown";
   const d=new Date(iso), now=new Date(), mins=Math.round((now-d)/60000);
@@ -119,6 +135,7 @@ if (window.Chart) {
       chart.$solo = i;
     }
     chart.update();
+    repaintChart(chart);
   };
 }
 
@@ -202,6 +219,7 @@ if (window.Chart) {
           pills.querySelectorAll(".cpill").forEach(x => x.classList.remove("on"));
           b.classList.add("on");
           apply(); chart.update();
+          repaintChart(chart);
         };
         pills.appendChild(b);
       });
@@ -216,6 +234,7 @@ if (window.Chart) {
         c.onclick = () => {
           chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
           chart.update(); paint();
+          repaintChart(chart);
         };
         paint();
         chips.appendChild(c);
