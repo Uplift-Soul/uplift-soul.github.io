@@ -9,7 +9,7 @@
 <meta property="og:site_name" content="INVST Gaming">
 <meta property="og:title" content="INVST Gaming — Live">
 <meta property="og:description" content="Live Twitch snapshot: top categories right now, with the streamers behind them and fragility rankings.">
-<meta property="og:url" content="https://invstgaming.co.uk/live.html">
+<meta property="og:url" content="https://invstgaming.co.uk/live">
 <meta property="og:image" content="https://invstgaming.co.uk/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <title>INVST Gaming — Live</title>
@@ -22,9 +22,9 @@
 <body>
 <div class="wrap">
   <nav class="nav">
-    <a href="index.html">Overview</a>
-    <a href="live.html" class="active">Live</a>
-    <a href="historical.html">Historical</a>
+    <a href="/">Overview</a>
+    <a href="/live" class="active">Live</a>
+    <a href="/historical">Historical</a>
   </nav>
 
   <header>
@@ -57,7 +57,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="common.js?v=12"></script>
+<script src="common.js?v=13"></script>
 <script>
 function renderCats(data){
   const cur=data.current||[];
@@ -190,7 +190,7 @@ function renderLive(data){
   }
 }
 
-/* deep link: live.html#<category> opens and scrolls to that category */
+/* deep link: /live#<category> opens and scrolls to that category */
 function openCategoryByHash(){
   const cat=decodeURIComponent((location.hash||"").replace(/^#/,""));
   if(!cat) return;
