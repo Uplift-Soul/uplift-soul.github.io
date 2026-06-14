@@ -313,9 +313,9 @@ function flash(el){
   /* ---- palette ---- */
   let root, input, list, items = [], active = 0, open = false;
   const PAGES = [
-    {label:"Overview",   hint:"Trends & concentration", href:"index.html"},
-    {label:"Live",       hint:"Top categories now",     href:"live.html"},
-    {label:"Historical", hint:"Rankings & movers",      href:"historical.html"},
+    {label:"Overview",   hint:"Trends & concentration", href:"/"},
+    {label:"Live",       hint:"Top categories now",     href:"/live"},
+    {label:"Historical", hint:"Rankings & movers",      href:"/historical"},
   ];
 
   const buildPalette = () => {
@@ -338,7 +338,7 @@ function flash(el){
 
   const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const allItems = () => PAGES.concat((window.__CATS || []).map(c =>
-    ({label:c, hint:"Open on Live", href:"live.html#"+encodeURIComponent(c), cat:true})));
+    ({label:c, hint:"Open on Live", href:"/live#"+encodeURIComponent(c), cat:true})));
 
   const render = () => {
     const q = input.value.trim().toLowerCase();
@@ -363,12 +363,15 @@ function flash(el){
     if(els[i]) els[i].scrollIntoView({block:"nearest"});
   };
 
+  /* normalise any path/href to a page id so same-page detection works whether the
+     URL is "/live", "/live.html" or "/" (root → "index") */
+  const pageId = p => (p.split("#")[0].split("?")[0].replace(/^.*\//,"").replace(/\.html$/,"") || "index");
+
   const activate = i => {
     const it = items[i]; if(!it) return;
     close();
-    const here = location.pathname.split("/").pop() || "index.html";
-    const [path, hash] = it.href.split("#");
-    if(path === here){ if(hash) location.hash = hash; return; }   // same page → just set hash
+    const hash = it.href.split("#")[1];
+    if(pageId(it.href) === pageId(location.pathname)){ if(hash) location.hash = hash; return; }  // same page → just set hash
     location.href = it.href;
   };
 
