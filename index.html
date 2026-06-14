@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
@@ -58,7 +58,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi</footer>
 </div>
 
-<script src="common.js?v=11"></script>
+<script src="common.js?v=12"></script>
 <script>
 function renderKpis(data){
   const cur=data.current||[];
@@ -163,9 +163,13 @@ function renderTrend(data){
           callbacks:{label:c=>` ${c.dataset.label}: ${fullNum(c.parsed.y)}`}}
       },
       scales:{
-        x:{type:"time",time:{unit:"month"},
+        x:{type:"time",
+           /* no fixed unit: let Chart.js pick days when zoomed to Live and
+              months when showing All/Archive, so the x-axis always has ticks
+              (a forced month unit left the short Live range with none) */
+           time:{minUnit:"day"},
            grid:{color:"rgba(255,255,255,.04)"},
-           ticks:{color:"#8a8aa0",font:{family:"IBM Plex Mono",size:10},maxRotation:0}},
+           ticks:{color:"#8a8aa0",font:{family:"IBM Plex Mono",size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8}},
         y:{grid:{color:"rgba(255,255,255,.04)"},
            ticks:{color:"#8a8aa0",font:{family:"IBM Plex Mono",size:10},callback:v=>fmt(v)}}
       }
