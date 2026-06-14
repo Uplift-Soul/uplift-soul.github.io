@@ -70,13 +70,13 @@ body::after{
 
 .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:18px 16px 56px}
 
-/* ---- nav: floating glass segmented control ---- */
+/* ---- nav: floating glass segmented control (sticky) ---- */
 .nav{
-  /* deliberately NOT sticky. Verified via elementFromPoint: a sticky bar
-     (z-index:50) sat on top of the chart range/category controls whenever they
-     scrolled into the top ~48px band and stole their clicks — controls worked
-     until you scrolled, then went dead. Jump-from-anywhere is covered by the
-     ⌘K command palette instead. */
+  /* Sticky/floating nav. It used to steal clicks from the chart range/category
+     controls when they scrolled up into its band (z-index:50 sat on top of
+     them). Fixed by raising .chartctl to z-index:51 (see below) so the controls
+     always win the hit-test and stay clickable as they pass under the nav. */
+  position:sticky;top:12px;z-index:50;
   display:flex;flex-wrap:wrap;width:max-content;max-width:100%;gap:4px;
   padding:5px;margin-bottom:30px;
   border:1px solid var(--line);border-radius:999px;
@@ -216,7 +216,9 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 
 /* ---- charts + controls ---- */
 .chartbox{position:relative;height:300px}
-.chartctl{display:flex;flex-direction:column;gap:10px;margin:-2px 0 16px}
+/* z-index:51 keeps the range/category controls above the sticky nav (z-index:50)
+   so they stay clickable when they scroll up into the nav's band */
+.chartctl{display:flex;flex-direction:column;gap:10px;margin:-2px 0 16px;position:relative;z-index:51}
 .pills{display:flex;flex-wrap:wrap;gap:6px}
 .cpill{
   font-family:var(--font-mono);font-size:11px;padding:5px 14px;border-radius:999px;
