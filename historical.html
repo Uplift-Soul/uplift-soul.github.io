@@ -105,9 +105,23 @@ function renderMovers(data){
   if(!g.length && !f.length){ host.innerHTML='<div class="error">No movers data yet.</div>'; return; }
 
   if(mv.window){
-    const fmtM = s => new Date(s).toLocaleDateString("en-GB",{month:"short",year:"numeric"});
-    document.getElementById("movers-cap").textContent =
-      `Risers and fallers by peak concurrent viewers — comparing ${fmtM(mv.window.from)} against ${fmtM(mv.window.to)}.`;
+    const w = mv.window, cap = document.getElementById("movers-cap");
+    if(w.now_from && w.now_to){
+      /* month-to-date window: show the exact day span + both years */
+      const d0 = new Date(w.now_from), d1 = new Date(w.now_to);
+      const mon = d => d.toLocaleDateString("en-GB",{month:"short"});
+      const sameMonth = d0.getMonth()===d1.getMonth() && d0.getFullYear()===d1.getFullYear();
+      const range = sameMonth
+        ? `${d0.getDate()}–${d1.getDate()} ${mon(d1)}`
+        : `${d0.getDate()} ${mon(d0)} – ${d1.getDate()} ${mon(d1)}`;
+      cap.textContent =
+        `Risers and fallers by peak concurrent viewers — ${range}, ${w.then_year} vs ${w.now_year}.`;
+    } else if(w.from && w.to){
+      /* legacy month-year window (frontend served before the Pi regenerated data) */
+      const fmtM = s => new Date(s).toLocaleDateString("en-GB",{month:"short",year:"numeric"});
+      cap.textContent =
+        `Risers and fallers by peak concurrent viewers — comparing ${fmtM(w.from)} against ${fmtM(w.to)}.`;
+    }
   }
 
   const col = (items,dir)=>{
