@@ -45,7 +45,7 @@
 
   <section class="panel alt">
     <h2>Biggest Movers</h2>
-    <div class="cap" id="movers-cap">Risers and fallers by average viewership across the historical window.</div>
+    <div class="cap" id="movers-cap">Risers and fallers by peak concurrent viewers.</div>
     <div id="movers" class="js-err"><div class="skelrows" aria-hidden="true">
       <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
       <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
@@ -107,7 +107,7 @@ function renderMovers(data){
   if(mv.window){
     const fmtM = s => new Date(s).toLocaleDateString("en-GB",{month:"short",year:"numeric"});
     document.getElementById("movers-cap").textContent =
-      `Risers and fallers by average viewership — comparing ${fmtM(mv.window.from)} against ${fmtM(mv.window.to)}.`;
+      `Risers and fallers by peak concurrent viewers — comparing ${fmtM(mv.window.from)} against ${fmtM(mv.window.to)}.`;
   }
 
   const col = (items,dir)=>{
