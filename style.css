@@ -307,6 +307,8 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 footer{font-family:var(--font-mono);font-size:11px;color:var(--faint);
   text-align:center;margin-top:40px;padding-top:22px;border-top:1px solid var(--line);
   letter-spacing:.06em}
+footer a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+footer a:hover{border-bottom-color:var(--accent)}
 .loading,.error{font-family:var(--font-mono);color:var(--muted);font-size:13px;padding:14px 0}
 .loading{animation:fadepulse 1.6s ease infinite}
 .error{color:var(--coral)}
@@ -378,6 +380,9 @@ html.anim .rv.in{opacity:1;transform:none;
   .navtool .kbd{display:none}.navtool{padding:7px 9px}
   .nav{gap:3px}
   .nav a{padding:8px 12px;letter-spacing:.1em}
+  /* let long category names wrap instead of truncating, so the full title and the
+     inline "fragile" tag + expand chevron stay visible on narrow screens */
+  .cat{flex:1 1 0;min-width:0;white-space:normal;overflow:visible;text-overflow:clip}
 }
 
 /* ---- command palette (⌘K) ---- */
