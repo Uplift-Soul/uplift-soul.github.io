@@ -161,6 +161,29 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .kpi .delta.down{color:var(--coral)}
 .kpi .delta.flat{color:var(--muted)}
 
+/* ---- landing hub (home / Overview) ---- */
+.hub{margin:0 0 30px}
+.bio{font-size:15px;line-height:1.6;color:var(--muted);max-width:64ch;margin:0 0 20px}
+.hubgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.hubcard{display:flex;flex-direction:column;gap:9px;padding:16px 16px 15px;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+  border:1px solid var(--line);border-radius:18px;text-decoration:none;color:inherit;
+  transition:transform .25s var(--ease),border-color .25s,box-shadow .25s,background .25s}
+.hubcard:hover{transform:translateY(-3px);border-color:rgba(45,212,160,.45);box-shadow:var(--shadow-lift);
+  background:linear-gradient(180deg,rgba(45,212,160,.06),rgba(255,255,255,.012))}
+.hubtop{display:flex;justify-content:space-between;align-items:center}
+.hubname{font-family:var(--font-display);font-weight:600;font-size:16px}
+.hubgo{color:var(--faint);font-size:15px;transition:transform .25s var(--ease),color .25s}
+.hubcard:hover .hubgo{color:var(--accent);transform:translateX(3px)}
+.hubdesc{font-size:12.5px;line-height:1.5;color:var(--muted);flex:1 1 auto}
+.hubstat{display:flex;flex-direction:column;gap:2px;min-height:30px}
+.hubstat .tlabel{font-family:var(--font-mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint)}
+.hubstat .tval{font-family:var(--font-mono);font-size:12.5px;color:var(--accent);font-weight:500}
+.glance{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 14px}
+@media (max-width:900px){ .hubgrid{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:520px){ .hubgrid{grid-template-columns:1fr} }
+
 /* ---- panels ---- */
 .panel{
   position:relative;
