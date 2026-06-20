@@ -16,6 +16,10 @@ site on GitHub Pages.
 - **Live** (`/live`) — the latest snapshot's top categories (ranked by Twitch), the
   streamers behind each, and a *fragility* ranking (how much a category leans on its
   top 10 streamers).
+- **Trending** (`/trending`) — the **Breakout Tracker**: newly released games (per IGDB,
+  shipped in the last ~12 months) breaking into the top 50 for the first time. Each week
+  drafts that week's top new entrants and then follows them week by week, so you can see
+  whether each one keeps climbing or fades out.
 - **Historical** (`/historical`) — category rank changes month to month, and the
   biggest viewership risers/fallers (current month-to-date vs the same dates two
   years earlier).
@@ -55,6 +59,12 @@ Twitch Helix API
   reliably capture the evening peak, so peak-to-peak is a fair comparison.
 - **Concentration / fragility** is a ratio: a category's top-10 streamers' viewers ÷
   its total viewers.
+- **New entrants (Breakout Tracker)** use game **release dates from IGDB** (Twitch's own
+  game database, queried with the same Twitch credentials). A "new entrant" is a game
+  released within the last ~12 months that breaks into the top 50 *and* wasn't already
+  present when live collection began — which keeps perennials and annual franchises out
+  automatically. Each week's top new entrants are then tracked forward by their weekly
+  average daily peak. Release dates are looked up once and cached.
 - The collector captures the **top 50 categories** per snapshot; the dashboard
   surfaces the top 20.
 
@@ -63,6 +73,8 @@ Twitch Helix API
 - **Frontend:** HTML, CSS, vanilla JS, [Chart.js](https://www.chartjs.org/) (+ date-fns
   adapter), hosted on GitHub Pages.
 - **Backend (on the Pi):** Python (`requests`, `psycopg2`), PostgreSQL, cron.
+- **Data sources:** Twitch Helix API (snapshots) + [IGDB](https://www.igdb.com/) (game
+  release dates, via the shared Twitch OAuth credentials).
 
 ## Repository structure
 
@@ -70,13 +82,14 @@ Twitch Helix API
 .
 ├── index.html            # Overview
 ├── live.html             # Live
+├── trending.html         # Trending (Breakout Tracker)
 ├── historical.html       # Historical
 ├── assets/               # css · js · images
 │   ├── style.css
 │   ├── common.js
 │   ├── favicon.svg
 │   └── og.png
-├── *.json                # data published by the Pi (overview / live / history / data)
+├── *.json                # data published by the Pi (overview / live / history / trending / data)
 ├── .github/workflows/    # GitHub Pages deploy
 ├── CNAME                 # custom domain
 ├── LICENSE
@@ -92,8 +105,8 @@ python -m http.server 8000
 # open http://localhost:8000
 ```
 
-Clean URLs (`/live`, `/historical`) are a GitHub Pages feature; locally use the
-`.html` form (`/live.html`).
+Clean URLs (`/live`, `/trending`, `/historical`) are a GitHub Pages feature; locally use
+the `.html` form (`/live.html`).
 
 ## Conventions
 
