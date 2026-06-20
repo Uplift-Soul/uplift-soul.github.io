@@ -46,15 +46,6 @@
     </div></div>
   </section>
 
-  <section class="panel alt">
-    <h2>On the Rise</h2>
-    <div class="cap">Categories gaining viewers fastest — average daily peak over the last 7 days vs the previous 7, among those now drawing 10k+ concurrent viewers. Shows <b>before → now</b> and the % jump.</div>
-    <div id="rising" class="js-err"><div class="skelrows" aria-hidden="true">
-      <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
-      <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
-    </div></div>
-  </section>
-
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
@@ -108,32 +99,10 @@ function renderBreakout(data){
   host.innerHTML = html;
 }
 
-function renderRising(data){
-  const items = data.trending || [];
-  const host = document.getElementById("rising");
-  if(!items.length){ host.innerHTML='<div class="error">No trending data yet — needs about two weeks of live history.</div>'; return; }
-  const max = Math.max(1, ...items.map(m=>m.pct));
-  host.innerHTML = items.map(m=>`
-    <div class="moverrow">
-      <div class="moverhead">
-        <span class="cat">${m.category}</span>
-        <span class="moverval up">${fmt(m.start)} → ${fmt(m.end)} · +${m.pct}%</span>
-      </div>
-      <div class="track"><div class="fill teal" data-w="${(m.pct/max*100).toFixed(1)}"></div></div>
-    </div>`).join("");
-  requestAnimationFrame(()=>host.querySelectorAll(".fill").forEach(x=>x.style.width=x.dataset.w+"%"));
-}
-
-function refreshTrending(data){
-  renderBreakout(data);
-  renderRising(data);
-}
-
 loadData("trending.json").then(data=>{
   setUpdated(data);
   renderBreakout(data);
-  renderRising(data);
-  if(window.startAutoRefresh) startAutoRefresh("trending.json", data, refreshTrending);
+  if(window.startAutoRefresh) startAutoRefresh("trending.json", data, renderBreakout);
 }).catch(showError);
 </script>
 </body>
