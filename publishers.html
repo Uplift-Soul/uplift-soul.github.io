@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=16">
+<link rel="stylesheet" href="assets/style.css?v=17">
 </head>
 <body>
 <div class="wrap">
@@ -68,18 +68,20 @@
   <footer>INVST Gaming · Twitch Helix + IGDB data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=16"></script>
+<script src="assets/common.js?v=18"></script>
 <script>
 /* logo tile: IGDB company logo on a light tile, or a coloured monogram fallback
-   (used for franchises and anything IGDB has no logo for / that fails to load) */
-const escAttr = s => String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+   (used for franchises and anything IGDB has no logo for / that fails to load).
+   Name and logo URL both come from IGDB (community-editable), so both are escaped
+   before they hit innerHTML and the URL is required to be https. */
 function monoTile(name){
   const init = name.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase();
   let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))>>>0;
-  return `<div class="pmono" style="background:hsl(${h%360} 48% 64%)">${init}</div>`;
+  return `<div class="pmono" style="background:hsl(${h%360} 48% 64%)">${esc(init)}</div>`;
 }
 function logoTile(item){
-  if(item.logo) return `<div class="plogo"><img src="${item.logo}" alt="" loading="lazy" data-name="${escAttr(item.name)}" onerror="this.parentElement.outerHTML=monoTile(this.dataset.name)"></div>`;
+  if(item.logo && /^https:\/\//.test(item.logo))
+    return `<div class="plogo"><img src="${esc(item.logo)}" alt="" loading="lazy" data-name="${esc(item.name)}" onerror="this.parentElement.outerHTML=monoTile(this.dataset.name)"></div>`;
   return monoTile(item.name);
 }
 
@@ -93,7 +95,7 @@ function renderStandings(hostId, items){
       ${logoTile(s)}
       <div class="pubbody">
         <div class="moverhead">
-          <span class="cat">${s.name}</span>
+          <span class="cat">${esc(s.name)}</span>
           <span class="moverval up">${s.share.toFixed(1)}% · ${fmt(s.viewers)}</span>
         </div>
         <div class="track"><div class="fill teal" data-w="${(s.share/max*100).toFixed(1)}"></div></div>
@@ -118,7 +120,7 @@ function renderPubMovers(data){
         return `<div class="moverrow pubitem">
             ${logoTile(m)}
             <div class="pubbody">
-              <div class="moverhead"><span class="cat">${m.name}</span><span class="moverval ${dir}">${val}</span></div>
+              <div class="moverhead"><span class="cat">${esc(m.name)}</span><span class="moverval ${dir}">${val}</span></div>
               <div class="track"><div class="fill ${dir==='up'?'teal':'red'}" data-w="${(Math.abs(m.change)/max*100).toFixed(1)}"></div></div>
             </div>
           </div>`;
