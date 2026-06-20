@@ -20,6 +20,10 @@ site on GitHub Pages.
   shipped in the last ~12 months) breaking into the top 50 for the first time. Each week
   drafts that week's top new entrants and then follows them week by week, so you can see
   whether each one keeps climbing or fades out.
+- **Publishers** (`/publishers`) — **attention share**: which game publishers and
+  franchises own the most tracked Twitch viewers (7-day average daily peak), plus the
+  biggest weekly gainers and losers. Each game is attributed to one publisher (via IGDB),
+  non-game categories excluded.
 - **Historical** (`/historical`) — category rank changes month to month, and the
   biggest viewership risers/fallers (current month-to-date vs the same dates two
   years earlier).
@@ -83,13 +87,14 @@ Twitch Helix API
 ├── index.html            # Overview
 ├── live.html             # Live
 ├── trending.html         # Trending (Breakout Tracker)
+├── publishers.html       # Publishers (attention share)
 ├── historical.html       # Historical
 ├── assets/               # css · js · images
 │   ├── style.css
 │   ├── common.js
 │   ├── favicon.svg
 │   └── og.png
-├── *.json                # data published by the Pi (overview / live / history / trending / data)
+├── *.json                # data published by the Pi (overview / live / history / trending / publishers / data)
 ├── .github/workflows/    # GitHub Pages deploy
 ├── CNAME                 # custom domain
 ├── LICENSE
@@ -105,8 +110,8 @@ python -m http.server 8000
 # open http://localhost:8000
 ```
 
-Clean URLs (`/live`, `/trending`, `/historical`) are a GitHub Pages feature; locally use
-the `.html` form (`/live.html`).
+Clean URLs (`/live`, `/trending`, `/publishers`, `/historical`) are a GitHub Pages feature;
+locally use the `.html` form (`/live.html`).
 
 ## Conventions
 
