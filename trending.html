@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="INVST Gaming — Trending: the Twitch categories with the fastest-growing viewership right now.">
+<meta name="description" content="INVST Gaming — Trending: newly released games breaking into Twitch's top 50, tracked week by week, plus the fastest-growing categories right now.">
 <meta name="theme-color" content="#0a0b13">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="INVST Gaming">
 <meta property="og:title" content="INVST Gaming — Trending">
-<meta property="og:description" content="The Twitch categories gaining viewers fastest right now — on the rise.">
+<meta property="og:description" content="New entrants breaking into Twitch's top 50, tracked week by week — plus the categories on the rise.">
 <meta property="og:url" content="https://invstgaming.co.uk/trending">
 <meta property="og:image" content="https://invstgaming.co.uk/assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=14">
+<link rel="stylesheet" href="assets/style.css?v=15">
 </head>
 <body>
 <div class="wrap">
@@ -30,7 +30,7 @@
 
   <header>
     <div class="brand">
-      <div class="kicker">Trending · on the rise</div>
+      <div class="kicker">Trending · new entrants</div>
       <h1>IN<svg class="vmark" viewBox="0 0 38 42" overflow="visible" aria-hidden="true"><polyline points="5,8 16,36 33,3" stroke-width="9"/></svg>ST <span>Trending</span></h1>
       <div class="wordsub">Gaming</div>
     </div>
@@ -38,6 +38,15 @@
   </header>
 
   <section class="panel">
+    <h2>Breakout Tracker — New Entrants</h2>
+    <div class="cap">Newly released games (shipped in the last <b id="bo-window">12</b> months) breaking into the top 50 — drafted the week they arrive, then tracked every week after. Numbers are average daily peak viewers, oldest&nbsp;→&nbsp;latest. <span class="btag up">★ breakout</span> <span class="btag down">▼ fading</span> <span class="btag dropped">✕ dropped</span></div>
+    <div id="breakout" class="js-err"><div class="skelrows" aria-hidden="true">
+      <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
+      <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
+    </div></div>
+  </section>
+
+  <section class="panel alt">
     <h2>On the Rise</h2>
     <div class="cap">Categories gaining viewers fastest — average daily peak over the last 7 days vs the previous 7, among those now drawing 10k+ concurrent viewers. Shows <b>before → now</b> and the % jump.</div>
     <div id="rising" class="js-err"><div class="skelrows" aria-hidden="true">
@@ -51,6 +60,54 @@
 
 <script src="assets/common.js?v=14"></script>
 <script>
+/* trend label + colour class for each breakout draftee's trajectory */
+const TREND_TAG = {
+  breakout: ["up",      "★ breakout"],
+  up:       ["up",      "▲ climbing"],
+  down:     ["down",    "▼ fading"],
+  flat:     ["flat",    "→ holding"],
+  dropped:  ["dropped", "✕ dropped out"],
+  "new":    ["new",     "● just in"],
+};
+const boWeek = s => new Date(s).toLocaleDateString("en-GB", {day:"numeric", month:"short"});
+
+function renderBreakout(data){
+  const bo = data.breakout || {weeks:[], cohort:[]};
+  const host = document.getElementById("breakout");
+  const wb = document.getElementById("bo-window");
+  if(wb && bo.window_months) wb.textContent = bo.window_months;
+  if(!bo.cohort || !bo.cohort.length){
+    host.innerHTML = '<div class="error">No new entrants yet — waiting for a newly released game to break into the top 50.</div>';
+    return;
+  }
+  /* newest week first, one group per week, skip weeks that drafted nobody */
+  const weeks = (bo.weeks || []).slice().reverse();
+  let html = "";
+  for(const w of weeks){
+    const members = bo.cohort.filter(m => m.entry_week === w.week_no);
+    if(!members.length) continue;
+    const head = w.complete
+      ? `Week of ${boWeek(w.start)}`
+      : `This week <span class="bprov">in progress</span>`;
+    html += `<div class="bweek"><div class="bweekhead">${head}</div>`;
+    for(const m of members){
+      const [cls, lbl] = TREND_TAG[m.trend] || TREND_TAG["new"];
+      const traj = m.series.map((p, i) => {
+        const last = i === m.series.length - 1;
+        return p.avg_peak == null
+          ? '<span class="bpt out">—</span>'
+          : `<span class="bpt${last ? " cur" : ""}">${fmt(p.avg_peak)}</span>`;
+      }).join('<span class="barrow">›</span>');
+      html += `<div class="brow">
+          <div class="bmain"><span class="cat">${m.category}</span><span class="btag ${cls}">${lbl}</span></div>
+          <div class="btraj">${traj}</div>
+        </div>`;
+    }
+    html += `</div>`;
+  }
+  host.innerHTML = html;
+}
+
 function renderRising(data){
   const items = data.trending || [];
   const host = document.getElementById("rising");
@@ -67,10 +124,16 @@ function renderRising(data){
   requestAnimationFrame(()=>host.querySelectorAll(".fill").forEach(x=>x.style.width=x.dataset.w+"%"));
 }
 
+function refreshTrending(data){
+  renderBreakout(data);
+  renderRising(data);
+}
+
 loadData("trending.json").then(data=>{
   setUpdated(data);
+  renderBreakout(data);
   renderRising(data);
-  if(window.startAutoRefresh) startAutoRefresh("trending.json", data, renderRising);
+  if(window.startAutoRefresh) startAutoRefresh("trending.json", data, refreshTrending);
 }).catch(showError);
 </script>
 </body>
