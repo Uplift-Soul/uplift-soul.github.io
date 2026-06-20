@@ -18,8 +18,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css?v=17">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" integrity="sha384-cVMg8E3QFwTvGCDuK+ET4PD341jF3W8nO1auiXfuZNQkzbUUiBGLsIQUE+b1mxws" crossorigin="anonymous"></script>
 </head>
 <body>
 <div class="wrap">
@@ -88,7 +88,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=17"></script>
+<script src="assets/common.js?v=18"></script>
 <script>
 function renderKpis(data){
   const cur=data.current||[];
@@ -111,7 +111,7 @@ function renderKpis(data){
   document.getElementById("kpis").innerHTML = cards.map(c=>`
     <div class="kpi">
       <div class="label">${c.label}</div>
-      <div class="val ${c.sm?'sm':''}">${c.val}</div>
+      <div class="val ${c.sm?'sm':''}">${esc(c.val)}</div>
       ${deltaHtml(c.delta)}
       <div class="sub">${c.sub||""}</div>
     </div>`).join("");
@@ -263,7 +263,7 @@ function refreshOverview(data){
    leaves the card's description, never blocks the page) */
 function setTeaser(id, label, value){
   const el = document.getElementById(id);
-  if(el) el.innerHTML = `<span class="tlabel">${label}</span><span class="tval">${value}</span>`;
+  if(el) el.innerHTML = `<span class="tlabel">${esc(label)}</span><span class="tval">${esc(value)}</span>`;
 }
 function loadTeasers(overview){
   const top = (overview.current || [])[0];

@@ -50,6 +50,12 @@ const fmt = n => {
 };
 const fullNum = n => (Number(n)||0).toLocaleString("en-GB");
 
+/* escape a string before it goes into innerHTML — covers element text and
+   double-quoted attribute values, so names/URLs from data.json (Twitch/IGDB,
+   some of it community-editable) can't inject markup. Use at every innerHTML
+   sink that interpolates data. */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
 function timeAgo(iso){
   if(!iso) return "unknown";
   const d=new Date(iso), now=new Date(), mins=Math.round((now-d)/60000);
@@ -378,7 +384,6 @@ function flash(el){
     input.addEventListener("keydown", onKey);
   };
 
-  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const allItems = () => PAGES.concat((window.__CATS || []).map(c =>
     ({label:c, hint:"Open on Live", href:"/live#"+encodeURIComponent(c), cat:true})));
 
