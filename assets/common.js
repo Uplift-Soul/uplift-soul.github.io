@@ -14,6 +14,32 @@
   gtag("config", GA_ID);
 })();
 
+/* GA4 click events — which hub cards / nav links pull people in. Event delegation so it
+   covers every page (and any future page) automatically; gtag's default beacon transport
+   sends the hit reliably even as the click navigates away. */
+(function(){
+  var pid = p => (p.split("#")[0].split("?")[0].replace(/^.*\//,"").replace(/\.html$/,"") || "index");
+  document.addEventListener("click", function(e){
+    if(typeof window.gtag !== "function" || !e.target.closest) return;
+    var card = e.target.closest(".hubcard");
+    if(card){
+      gtag("event", "hub_card_click", {
+        destination: pid(card.getAttribute("href") || ""),
+        link_text: ((card.querySelector(".hubname") || {}).textContent || "").trim()
+      });
+      return;
+    }
+    var nav = e.target.closest("nav.nav a");
+    if(nav){
+      gtag("event", "nav_click", {
+        destination: pid(nav.getAttribute("href") || ""),
+        link_text: (nav.textContent || "").trim(),
+        from_page: pid(location.pathname)
+      });
+    }
+  }, true);
+})();
+
 const PALETTE = ["#2dd4a0","#a970ff","#ff7eb6","#ffb347","#5aa9ff","#9dff6e","#ff5c7a","#c08bff","#13e3c5","#ffd166"];
 
 const fmt = n => {
