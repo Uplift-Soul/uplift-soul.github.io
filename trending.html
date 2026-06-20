@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="INVST Gaming — Trending: the Twitch categories with the fastest-growing viewership right now.">
+<meta name="theme-color" content="#0a0b13">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="INVST Gaming">
+<meta property="og:title" content="INVST Gaming — Trending">
+<meta property="og:description" content="The Twitch categories gaining viewers fastest right now — on the rise.">
+<meta property="og:url" content="https://invstgaming.co.uk/trending">
+<meta property="og:image" content="https://invstgaming.co.uk/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<title>INVST Gaming — Trending</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css?v=14">
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <a href="/">Overview</a>
+    <a href="/live">Live</a>
+    <a href="/trending" class="active">Trending</a>
+    <a href="/historical">Historical</a>
+  </nav>
+
+  <header>
+    <div class="brand">
+      <div class="kicker">Trending · on the rise</div>
+      <h1>IN<svg class="vmark" viewBox="0 0 38 42" overflow="visible" aria-hidden="true"><polyline points="5,8 16,36 33,3" stroke-width="9"/></svg>ST <span>Trending</span></h1>
+      <div class="wordsub">Gaming</div>
+    </div>
+    <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
+  </header>
+
+  <section class="panel">
+    <h2>On the Rise</h2>
+    <div class="cap">Categories gaining viewers fastest — average daily peak over the last 7 days vs the previous 7, among those now drawing 10k+ concurrent viewers. Shows <b>before → now</b> and the % jump.</div>
+    <div id="rising" class="js-err"><div class="skelrows" aria-hidden="true">
+      <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
+      <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
+    </div></div>
+  </section>
+
+  <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
+</div>
+
+<script src="assets/common.js?v=14"></script>
+<script>
+function renderRising(data){
+  const items = data.trending || [];
+  const host = document.getElementById("rising");
+  if(!items.length){ host.innerHTML='<div class="error">No trending data yet — needs about two weeks of live history.</div>'; return; }
+  const max = Math.max(1, ...items.map(m=>m.pct));
+  host.innerHTML = items.map(m=>`
+    <div class="moverrow">
+      <div class="moverhead">
+        <span class="cat">${m.category}</span>
+        <span class="moverval up">${fmt(m.start)} → ${fmt(m.end)} · +${m.pct}%</span>
+      </div>
+      <div class="track"><div class="fill teal" data-w="${(m.pct/max*100).toFixed(1)}"></div></div>
+    </div>`).join("");
+  requestAnimationFrame(()=>host.querySelectorAll(".fill").forEach(x=>x.style.width=x.dataset.w+"%"));
+}
+
+loadData("trending.json").then(data=>{
+  setUpdated(data);
+  renderRising(data);
+  if(window.startAutoRefresh) startAutoRefresh("trending.json", data, renderRising);
+}).catch(showError);
+</script>
+</body>
+</html>
