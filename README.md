@@ -11,8 +11,9 @@ site on GitHub Pages.
 
 ## Pages
 
-- **Overview** (`/`) — headline KPIs, a per-category viewership trend (daily peak,
-  7-day smoothed), and top-10 concentration over time.
+- **Overview** (`/`) — a landing hub: a short intro plus quick-link cards to each page
+  (each with a live teaser stat), then the headline KPIs, a per-category viewership trend
+  (daily peak, 7-day smoothed), and top-10 concentration over time.
 - **Live** (`/live`) — the latest snapshot's top categories (ranked by Twitch), the
   streamers behind each, and a *fragility* ranking (how much a category leans on its
   top 10 streamers).
