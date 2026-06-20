@@ -17,9 +17,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=16">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<link rel="stylesheet" href="assets/style.css?v=17">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" integrity="sha384-cVMg8E3QFwTvGCDuK+ET4PD341jF3W8nO1auiXfuZNQkzbUUiBGLsIQUE+b1mxws" crossorigin="anonymous"></script>
 </head>
 <body>
 <div class="wrap">
@@ -39,6 +39,34 @@
     </div>
     <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
   </header>
+
+  <section class="hub">
+    <p class="bio">Twitch category intelligence — what's being watched right now, which new games are breaking out, and which publishers own the attention. Live from the Twitch API, refreshed every few hours.</p>
+    <div class="hubgrid">
+      <a class="hubcard" href="/live">
+        <div class="hubtop"><span class="hubname">Live</span><span class="hubgo" aria-hidden="true">→</span></div>
+        <div class="hubdesc">Top categories right now, the streamers behind them, and which lean hardest on a few big names.</div>
+        <div class="hubstat" id="t-live"></div>
+      </a>
+      <a class="hubcard" href="/trending">
+        <div class="hubtop"><span class="hubname">Trending</span><span class="hubgo" aria-hidden="true">→</span></div>
+        <div class="hubdesc">Newly released games breaking into the top 50, drafted and tracked week by week.</div>
+        <div class="hubstat" id="t-trending"></div>
+      </a>
+      <a class="hubcard" href="/publishers">
+        <div class="hubtop"><span class="hubname">Publishers</span><span class="hubgo" aria-hidden="true">→</span></div>
+        <div class="hubdesc">Which publishers and franchises own the most Twitch attention, and who's moving.</div>
+        <div class="hubstat" id="t-pub"></div>
+      </a>
+      <a class="hubcard" href="/historical">
+        <div class="hubtop"><span class="hubname">Historical</span><span class="hubgo" aria-hidden="true">→</span></div>
+        <div class="hubdesc">How category rankings shift month to month, and the biggest risers and fallers.</div>
+        <div class="hubstat" id="t-hist"></div>
+      </a>
+    </div>
+  </section>
+
+  <div class="glance">At a glance</div>
 
   <div class="kpis js-err" id="kpis">
     <div class="kpi skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
@@ -60,7 +88,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=16"></script>
+<script src="assets/common.js?v=18"></script>
 <script>
 function renderKpis(data){
   const cur=data.current||[];
@@ -83,7 +111,7 @@ function renderKpis(data){
   document.getElementById("kpis").innerHTML = cards.map(c=>`
     <div class="kpi">
       <div class="label">${c.label}</div>
-      <div class="val ${c.sm?'sm':''}">${c.val}</div>
+      <div class="val ${c.sm?'sm':''}">${esc(c.val)}</div>
       ${deltaHtml(c.delta)}
       <div class="sub">${c.sub||""}</div>
     </div>`).join("");
@@ -231,11 +259,36 @@ function refreshOverview(data){
   renderConcentration(data);
 }
 
+/* hub cards: fill each with a live teaser stat (best-effort — a failed fetch just
+   leaves the card's description, never blocks the page) */
+function setTeaser(id, label, value){
+  const el = document.getElementById(id);
+  if(el) el.innerHTML = `<span class="tlabel">${esc(label)}</span><span class="tval">${esc(value)}</span>`;
+}
+function loadTeasers(overview){
+  const top = (overview.current || [])[0];
+  if(top) setTeaser("t-live", "Now leading", `${top.category} · ${fmt(top.viewership)}`);
+  loadData("trending.json").then(d=>{
+    const c = ((d.breakout || {}).cohort) || [];
+    const best = c.filter(m=>m.latest).sort((a,b)=>b.latest-a.latest)[0];
+    if(best) setTeaser("t-trending", "Breaking out", `${best.category} · ${fmt(best.latest)}`);
+  }).catch(()=>{});
+  loadData("publishers.json").then(d=>{
+    const s = (((d.publishers || {}).publishers) || {}).standings || [];
+    if(s[0]) setTeaser("t-pub", "Leading", `${s[0].name} · ${s[0].share.toFixed(1)}%`);
+  }).catch(()=>{});
+  loadData("history.json").then(d=>{
+    const g = ((d.movers || {}).gainers) || [];
+    if(g[0]) setTeaser("t-hist", "Top riser", `${g[0].category} · +${g[0].pct}%`);
+  }).catch(()=>{});
+}
+
 loadData("overview.json").then(data=>{
   setUpdated(data);
   renderKpis(data);
   renderTrend(data);
   renderConcentration(data);
+  loadTeasers(data);
   if(window.startAutoRefresh) startAutoRefresh("overview.json", data, refreshOverview);
 }).catch(showError);
 </script>

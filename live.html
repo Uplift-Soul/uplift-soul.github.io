@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=16">
+<link rel="stylesheet" href="assets/style.css?v=17">
 </head>
 <body>
 <div class="wrap">
@@ -59,7 +59,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=16"></script>
+<script src="assets/common.js?v=18"></script>
 <script>
 function renderCats(data){
   const cur=data.current||[];
@@ -68,11 +68,11 @@ function renderCats(data){
   const max=Math.max(...cur.map(c=>c.viewership||0))||1;
   const prevByCat=(data.previous&&data.previous.by_category)||{};
   el.innerHTML = '<div class="rows">'+cur.map((c,i)=>`
-    <div class="row xrow" data-cat="${c.category}" role="button" tabindex="0" aria-expanded="false" style="--i:${i}">
+    <div class="row xrow" data-cat="${esc(c.category)}" role="button" tabindex="0" aria-expanded="false" style="--i:${i}">
       <div class="rank">${String(c.rank).padStart(2,'0')}</div>
       <div class="barwrap">
         <div class="barname">
-          <span class="cat">${c.category}</span>
+          <span class="cat">${esc(c.category)}</span>
           <span class="conc">top 10 = <b>${c.top10_pct!=null?c.top10_pct+'%':'—'}</b></span>
         </div>
         <div class="track"><div class="fill" data-w="${(c.viewership/max*100).toFixed(1)}"></div></div>
@@ -107,11 +107,11 @@ function renderFragility(data){
   if(!cur.length){el.innerHTML='<div class="error">No concentration data yet.</div>';return;}
   const ranked=[...cur].sort((a,b)=>b.top10_pct-a.top10_pct);
   el.innerHTML = '<div class="rows">'+ranked.map((c,i)=>`
-    <div class="row xrow" data-cat="${c.category}" role="button" tabindex="0" aria-expanded="false" style="--i:${i}">
+    <div class="row xrow" data-cat="${esc(c.category)}" role="button" tabindex="0" aria-expanded="false" style="--i:${i}">
       <div class="rank">${String(i+1).padStart(2,'0')}</div>
       <div class="barwrap">
         <div class="barname">
-          <span class="cat">${c.category}${c.top10_pct>=80?' <span class="tag">fragile</span>':''}</span>
+          <span class="cat">${esc(c.category)}${c.top10_pct>=80?' <span class="tag">fragile</span>':''}</span>
           <span class="conc">${fmt(c.viewership)} viewers</span>
         </div>
         <div class="track"><div class="fill teal" data-w="${c.top10_pct.toFixed(1)}"></div></div>
@@ -129,7 +129,7 @@ function streamerPanel(data, cat){
   return '<div class="xp">' + list.map(s => `
     <div class="xprow">
       <span class="xrank">${String(s.rank).padStart(2,'0')}</span>
-      <span class="xname">${s.name}</span>
+      <span class="xname">${esc(s.name)}</span>
       <span class="xtrack"><span class="xfill" style="width:${(s.viewers/max*100).toFixed(1)}%"></span></span>
       <span class="xshare">${s.share_pct!=null ? s.share_pct.toFixed(1)+'%' : '—'}</span>
       <span class="xviews">${fmt(s.viewers)}</span>
