@@ -315,6 +315,7 @@ function flash(el){
   const PAGES = [
     {label:"Overview",   hint:"Trends & concentration", href:"/"},
     {label:"Live",       hint:"Top categories now",     href:"/live"},
+    {label:"Trending",   hint:"On the rise",            href:"/trending"},
     {label:"Historical", hint:"Rankings & movers",      href:"/historical"},
   ];
 
