@@ -59,7 +59,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=18"></script>
+<script src="assets/common.js?v=19"></script>
 <script>
 function renderCats(data){
   const cur=data.current||[];
@@ -168,6 +168,7 @@ function wireExpand(el, data){
       d.addEventListener("transitionend", () => { d.style.height = ""; }, {once:true});
       row.classList.add("open");
       row.setAttribute("aria-expanded","true");
+      track("category_expand", { category: row.dataset.cat });
     }
   };
   el.querySelectorAll(".xrow").forEach(row => {

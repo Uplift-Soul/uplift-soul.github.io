@@ -40,6 +40,12 @@
   }, true);
 })();
 
+/* small gtag wrapper — safe no-op if GA didn't load (adblockers, offline). Used
+   for the interaction events fired from the chart controls, palette, etc. */
+function track(name, params){
+  if (typeof window.gtag === "function") gtag("event", name, params || {});
+}
+
 const PALETTE = ["#2dd4a0","#a970ff","#ff7eb6","#ffb347","#5aa9ff","#9dff6e","#ff5c7a","#c08bff","#13e3c5","#ffd166"];
 
 const fmt = n => {
@@ -255,6 +261,7 @@ if (window.Chart) {
           pills.querySelectorAll(".cpill").forEach(x => x.classList.remove("on"));
           b.classList.add("on");
           apply(); chart.update();
+          track("chart_range_select", { range: t, chart: chart.canvas.id });
         };
         pills.appendChild(b);
       });
@@ -267,8 +274,10 @@ if (window.Chart) {
         c.innerHTML = '<span class="dotc"></span>' + d.label;
         const paint = () => c.classList.toggle("on", chart.isDatasetVisible(i));
         c.onclick = () => {
-          chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
+          const vis = !chart.isDatasetVisible(i);
+          chart.setDatasetVisibility(i, vis);
           chart.update(); paint();
+          track("chart_series_toggle", { series: d.label, visible: vis ? "show" : "hide", chart: chart.canvas.id });
         };
         paint();
         chips.appendChild(c);
@@ -416,6 +425,7 @@ function flash(el){
 
   const activate = i => {
     const it = items[i]; if(!it) return;
+    track("palette_select", { selection: it.label, selection_type: it.cat ? "category" : "page", query: input.value.trim() });
     close();
     const hash = it.href.split("#")[1];
     if(pageId(it.href) === pageId(location.pathname)){ if(hash) location.hash = hash; return; }  // same page → just set hash
@@ -433,6 +443,7 @@ function flash(el){
     if(!root) buildPalette();
     open = true; root.classList.add("on");
     input.value = ""; render(); input.focus();
+    track("palette_open");
   };
   function close(){ if(root){ open=false; root.classList.remove("on"); } }
 
@@ -463,7 +474,10 @@ function flash(el){
       dens.setAttribute("aria-label", "Toggle density (currently "+d+")");
     };
     dens.innerHTML = ICON_DENSITY;
-    dens.onclick = () => { window.__toggleDensity(); paintDens(); };
+    dens.onclick = () => {
+      window.__toggleDensity(); paintDens();
+      track("density_toggle", { density: document.documentElement.getAttribute("data-density") });
+    };
     paintDens();
 
     tools.appendChild(search); tools.appendChild(dens);
