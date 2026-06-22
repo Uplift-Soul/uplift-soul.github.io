@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=17">
+<link rel="stylesheet" href="assets/style.css?v=19">
 </head>
 <body>
 <div class="wrap">
@@ -59,7 +59,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=19"></script>
+<script src="assets/common.js?v=21"></script>
 <script>
 function renderCats(data){
   const cur=data.current||[];
@@ -78,6 +78,7 @@ function renderCats(data){
         <div class="track"><div class="fill" data-w="${(c.viewership/max*100).toFixed(1)}"></div></div>
       </div>
       <div class="views"><span class="vval">${fmt(c.viewership)}</span>${moveHtml(c,prevByCat)}</div>
+      <span class="xcaret" aria-hidden="true">›</span>
     </div>`).join("")+'</div>';
   requestAnimationFrame(()=>el.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%"));
   /* flash any viewer counts that changed since the previous render (auto-refresh) */
@@ -117,6 +118,7 @@ function renderFragility(data){
         <div class="track"><div class="fill teal" data-w="${c.top10_pct.toFixed(1)}"></div></div>
       </div>
       <div class="views">${c.top10_pct.toFixed(0)}%</div>
+      <span class="xcaret" aria-hidden="true">›</span>
     </div>`).join("")+'</div>';
   requestAnimationFrame(()=>el.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%"));
 }
