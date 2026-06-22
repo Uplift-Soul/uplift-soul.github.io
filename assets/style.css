@@ -206,8 +206,14 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
   white-space:normal;overflow-wrap:break-word;max-width:72ch}
 
 /* ---- category bars ---- */
-.rows{display:flex;flex-direction:column;gap:4px}
-.row{display:grid;grid-template-columns:26px minmax(0,1fr) 76px;align-items:center;gap:10px}
+.rows{display:flex;flex-direction:column;gap:2px}
+.row{display:grid;grid-template-columns:26px minmax(0,1fr) 76px 14px;align-items:center;gap:10px}
+/* clickable rows (Live): fluid hover surface + press feel, reusing the nav hover idiom */
+.xrow{cursor:pointer;border-radius:12px;padding:8px 10px;margin:0 -10px;
+  transition:background .22s var(--ease),box-shadow .22s var(--ease),transform .12s var(--ease)}
+.xrow:hover{background:rgba(255,255,255,.035)}
+.xrow.open{background:rgba(45,212,160,.05)}
+.xrow:active{transform:scale(.992)}
 /* cascade: rows fade in and bars fill top-to-bottom (--i set per row in markup) */
 .rows .row{opacity:0;animation:rise .5s var(--ease) forwards;animation-delay:calc(var(--i,0)*35ms)}
 .rows .fill{transition-delay:calc(var(--i,0)*35ms)}
@@ -231,6 +237,11 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .fill.teal{background:linear-gradient(90deg,#17a87d,var(--teal))}
 .fill.red{background:linear-gradient(90deg,#b03a55,var(--coral))}
 .views{font-family:var(--font-mono);font-size:13px;font-weight:500;text-align:right}
+/* expand caret — fades in on hover, rotates to point down when the row is open */
+.xcaret{font-family:var(--font-mono);font-size:15px;line-height:1;text-align:center;color:var(--faint);
+  opacity:.4;transition:transform .3s var(--ease),opacity .2s,color .2s}
+.xrow:hover .xcaret{opacity:.9;color:var(--muted)}
+.xrow.open .xcaret{transform:rotate(90deg);color:var(--accent);opacity:1}
 
 /* fragile tag */
 .tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
@@ -372,9 +383,9 @@ footer a:hover{border-bottom-color:var(--accent)}
 .error{color:var(--coral)}
 
 /* ---- scroll reveal (activated by common.js adding html.anim) ---- */
-html.anim .rv{opacity:0;transform:translateY(22px)}
+html.anim .rv{opacity:0;transform:translateY(14px)}
 html.anim .rv.in{opacity:1;transform:none;
-  transition:opacity .75s var(--ease),transform .75s var(--ease)}
+  transition:opacity .6s var(--ease),transform .6s var(--ease)}
 
 /* ---- motion ---- */
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
