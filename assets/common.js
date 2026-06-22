@@ -4,14 +4,31 @@
    page that loads common.js) is covered automatically. */
 (function(){
   var GA_ID = "G-3WCRTR4K5N";
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function(){ dataLayer.push(arguments); };
+
+  /* Consent Mode v2 (GDPR/PECR) — analytics off by default. gtag.js still loads,
+     but with analytics_storage "denied" it stores no cookies and sends only
+     cookieless pings until the visitor accepts. A previously stored "granted"
+     choice is restored here so returning consenters get full analytics on load
+     and never see the banner again. Must run before gtag('config'). */
+  var consent = null;
+  try { consent = localStorage.getItem("invst-consent"); } catch(e){}
+  gtag("consent", "default", {
+    ad_storage: "denied",
+    ad_user_data: "denied",
+    ad_personalization: "denied",
+    analytics_storage: consent === "granted" ? "granted" : "denied"
+  });
+  window.__consent = consent;   // read by the consent banner below
+
+  gtag("js", new Date());
+  gtag("config", GA_ID);
+
   var s = document.createElement("script");
   s.async = true;
   s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
   document.head.appendChild(s);
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function(){ dataLayer.push(arguments); };
-  gtag("js", new Date());
-  gtag("config", GA_ID);
 })();
 
 /* GA4 click events — which hub cards / nav links pull people in. Event delegation so it
@@ -301,7 +318,7 @@ if (window.Chart) {
   document.documentElement.classList.add("anim");
   const io = new IntersectionObserver(entries => {
     entries.filter(e => e.isIntersecting).forEach((e, i) => {
-      e.target.style.transitionDelay = (i * 90) + "ms";
+      e.target.style.transitionDelay = (i * 55) + "ms";
       e.target.classList.add("in");
       io.unobserve(e.target);
     });
@@ -486,4 +503,39 @@ function flash(el){
 
   if(document.readyState !== "loading") buildTools();
   else document.addEventListener("DOMContentLoaded", buildTools);
+})();
+
+
+/* --- consent banner ----------------------------------------------------------
+   Shown once, only until the visitor chooses. Accept flips Consent Mode's
+   analytics_storage to granted (so cookies + full analytics turn on for this and
+   future visits); Decline leaves it denied. Either way the choice is persisted,
+   so the banner never reappears. Skipped entirely when a choice already exists. */
+(() => {
+  if (window.__consent === "granted" || window.__consent === "denied") return;
+  const build = () => {
+    if (document.querySelector(".consent")) return;
+    const bar = document.createElement("div");
+    bar.className = "consent";
+    bar.setAttribute("role", "dialog");
+    bar.setAttribute("aria-label", "Privacy choice");
+    bar.innerHTML =
+      '<p class="consent-msg">This site uses <b>Google Analytics</b> to see how it’s used — no ads, nothing sold on. Analytics cookies stay off until you accept.</p>' +
+      '<div class="consent-acts">' +
+        '<button class="consent-btn" type="button" data-consent="denied">Decline</button>' +
+        '<button class="consent-btn ok" type="button" data-consent="granted">Accept</button>' +
+      '</div>';
+    const choose = v => {
+      if (v === "granted" && typeof window.gtag === "function")
+        gtag("consent", "update", { analytics_storage: "granted" });
+      try { localStorage.setItem("invst-consent", v); } catch(e){}
+      window.__consent = v;
+      bar.remove();
+    };
+    bar.querySelectorAll("[data-consent]").forEach(b =>
+      b.addEventListener("click", () => choose(b.getAttribute("data-consent"))));
+    document.body.appendChild(bar);
+  };
+  if (document.readyState !== "loading") build();
+  else document.addEventListener("DOMContentLoaded", build);
 })();
