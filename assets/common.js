@@ -318,7 +318,7 @@ if (window.Chart) {
   document.documentElement.classList.add("anim");
   const io = new IntersectionObserver(entries => {
     entries.filter(e => e.isIntersecting).forEach((e, i) => {
-      e.target.style.transitionDelay = (i * 90) + "ms";
+      e.target.style.transitionDelay = (i * 55) + "ms";
       e.target.classList.add("in");
       io.unobserve(e.target);
     });
