@@ -486,3 +486,40 @@ html[data-density="compact"] .chartbox{height:240px}
   html[data-density="compact"] .chartbox{height:320px}
   html[data-density="compact"] .panel{padding:18px 20px}
 }
+
+/* ---- consent banner (Consent Mode v2) ---- */
+.consent{
+  position:fixed;z-index:90;left:0;right:0;bottom:16px;margin:0 auto;
+  width:min(680px,calc(100% - 24px));
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:14px 16px;
+  border:1px solid var(--line-2);border-radius:16px;
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(16px) saturate(150%);
+  backdrop-filter:blur(16px) saturate(150%);
+  box-shadow:var(--shadow-lift);
+}
+.consent-msg{flex:1 1 280px;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.consent-msg b{color:var(--text);font-weight:600}
+.consent-acts{display:flex;gap:8px;flex:none}
+.consent-btn{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;
+  padding:8px 16px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--line-2);background:transparent;color:var(--muted);
+  transition:color .2s,border-color .2s,background .2s,transform .15s var(--ease);
+}
+.consent-btn:hover{color:var(--text);border-color:var(--line-2)}
+.consent-btn:active{transform:scale(.94)}
+.consent-btn.ok{
+  border-color:rgba(45,212,160,.55);color:var(--accent);background:rgba(45,212,160,.10);
+  box-shadow:0 0 16px -6px rgba(45,212,160,.5);
+}
+.consent-btn.ok:hover{background:rgba(45,212,160,.18);color:var(--accent-2)}
+@media (prefers-reduced-motion:no-preference){
+  .consent{animation:consent-in .5s var(--ease) both}
+}
+@keyframes consent-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (max-width:760px){
+  .consent{bottom:10px;flex-direction:column;align-items:stretch}
+  .consent-acts{justify-content:flex-end}
+}
