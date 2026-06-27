@@ -361,24 +361,12 @@ function flash(el){
 }
 
 
-/* --- density toggle (comfortable | compact), persisted ---------------------- */
-(() => {
-  const KEY = "invst-density", root = document.documentElement;
-  const set = d => { root.setAttribute("data-density", d); try{ localStorage.setItem(KEY, d); }catch(e){} };
-  let cur = "comfortable";
-  try { cur = localStorage.getItem(KEY) || cur; } catch(e){}
-  set(cur);                                   // applied before paint where possible
-  window.__toggleDensity = () =>
-    set(root.getAttribute("data-density") === "compact" ? "comfortable" : "compact");
-})();
-
-
-/* --- nav tools (⌘K trigger + density button) + command palette -------------- */
+/* --- nav tools (⌘K) + command palette + scroll-collapse burger ------------- */
 (() => {
   const ICON_SEARCH =
     '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
-  const ICON_DENSITY =
-    '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="2.5" y1="4" x2="13.5" y2="4"/><line x1="2.5" y1="8" x2="13.5" y2="8"/><line x1="2.5" y1="12" x2="13.5" y2="12"/></g></svg>';
+  const ICON_BURGER =
+    '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="2.5" y1="4.5" x2="13.5" y2="4.5"/><line x1="2.5" y1="8" x2="13.5" y2="8"/><line x1="2.5" y1="11.5" x2="13.5" y2="11.5"/></g></svg>';
 
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
@@ -468,41 +456,89 @@ function flash(el){
     if((e.ctrlKey||e.metaKey) && (e.key==="k"||e.key==="K")){ e.preventDefault(); open ? close() : openPalette(); }
   });
 
-  /* ---- inject the nav tools (search + density) ---- */
+  /* ---- inject the ⌘K search button into the full bar ---- */
   const buildTools = () => {
     const nav = document.querySelector(".nav");
     if(!nav || nav.querySelector(".navtools")) return;
     const tools = document.createElement("span");
     tools.className = "navtools";
-
     const search = document.createElement("button");
     search.type = "button"; search.className = "navtool";
     search.setAttribute("aria-label", "Search (press "+(isMac?"⌘":"Ctrl")+"K)");
     search.title = "Search · "+(isMac?"⌘":"Ctrl")+"K";
     search.innerHTML = ICON_SEARCH + '<span class="kbd">'+(isMac?"⌘":"Ctrl")+'K</span>';
     search.onclick = openPalette;
-
-    const dens = document.createElement("button");
-    dens.type = "button"; dens.className = "navtool";
-    const paintDens = () => {
-      const d = document.documentElement.getAttribute("data-density");
-      dens.setAttribute("aria-pressed", d === "compact" ? "true" : "false");
-      dens.title = "Density: "+d;
-      dens.setAttribute("aria-label", "Toggle density (currently "+d+")");
-    };
-    dens.innerHTML = ICON_DENSITY;
-    dens.onclick = () => {
-      window.__toggleDensity(); paintDens();
-      track("density_toggle", { density: document.documentElement.getAttribute("data-density") });
-    };
-    paintDens();
-
-    tools.appendChild(search); tools.appendChild(dens);
+    tools.appendChild(search);
     nav.appendChild(tools);
   };
 
-  if(document.readyState !== "loading") buildTools();
-  else document.addEventListener("DOMContentLoaded", buildTools);
+  /* ---- scroll-collapse burger: a mini bar (burger + search) that fades in as the
+     full nav fades out on scroll. The burger opens a dropdown of the pages, built
+     from PAGES so it stays in sync; the search button opens the ⌘K palette. ---- */
+  const buildBurger = () => {
+    if (document.querySelector(".navmini")) return;
+    const here = pageId(location.pathname);
+
+    const menu = document.createElement("nav");
+    menu.className = "navmenu"; menu.setAttribute("aria-label", "Pages");
+    menu.innerHTML = PAGES.map(p =>
+      `<a href="${p.href}" class="navmenu-item${pageId(p.href)===here?" active":""}">${esc(p.label)}</a>`
+    ).join("");
+
+    const mini = document.createElement("div"); mini.className = "navmini";
+    const burger = document.createElement("button");
+    burger.type = "button"; burger.className = "navtool burger";
+    burger.setAttribute("aria-label", "Open menu"); burger.setAttribute("aria-expanded", "false");
+    burger.innerHTML = ICON_BURGER;
+    const search = document.createElement("button");
+    search.type = "button"; search.className = "navtool";
+    search.setAttribute("aria-label", "Search (press "+(isMac?"⌘":"Ctrl")+"K)");
+    search.title = "Search · "+(isMac?"⌘":"Ctrl")+"K";
+    search.innerHTML = ICON_SEARCH;
+    search.onclick = openPalette;
+
+    let menuOpen = false;
+    const setMenu = o => {
+      menuOpen = o; menu.classList.toggle("on", o); burger.classList.toggle("on", o);
+      burger.setAttribute("aria-expanded", o ? "true" : "false");
+    };
+    burger.onclick = e => { e.stopPropagation(); setMenu(!menuOpen); };
+    document.addEventListener("click", e => {
+      if(menuOpen && !menu.contains(e.target) && !mini.contains(e.target)) setMenu(false);
+    });
+    document.addEventListener("keydown", e => { if(menuOpen && e.key==="Escape") setMenu(false); });
+    /* keep nav analytics complete — the delegated nav_click listener only matches
+       `nav.nav a`, which the burger menu isn't, so fire the event here too. */
+    menu.addEventListener("click", e => {
+      const a = e.target.closest("a"); if(!a) return;
+      track("nav_click", { destination: pageId(a.getAttribute("href")||""),
+        link_text: (a.textContent||"").trim(), from_page: here });
+      setMenu(false);
+    });
+
+    mini.appendChild(burger); mini.appendChild(search);
+    document.body.appendChild(menu); document.body.appendChild(mini);
+
+    /* collapse once a top sentinel (80px down) scrolls out of view */
+    const rootEl = document.documentElement;
+    const collapse = on => { rootEl.classList.toggle("nav-collapsed", on); if(!on) setMenu(false); };
+    if ("IntersectionObserver" in window) {
+      const sentinel = document.createElement("div");
+      sentinel.style.cssText = "position:absolute;top:80px;left:0;width:1px;height:1px;pointer-events:none";
+      document.body.appendChild(sentinel);
+      new IntersectionObserver(es => collapse(!es[0].isIntersecting)).observe(sentinel);
+    } else {
+      let last = false;
+      addEventListener("scroll", () => {
+        const on = (window.scrollY || rootEl.scrollTop) > 80;
+        if(on !== last){ last = on; collapse(on); }
+      }, { passive:true });
+    }
+  };
+
+  const init = () => { buildTools(); buildBurger(); };
+  if(document.readyState !== "loading") init();
+  else document.addEventListener("DOMContentLoaded", init);
 })();
 
 
