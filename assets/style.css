@@ -84,7 +84,9 @@ body::after{
   -webkit-backdrop-filter:blur(16px) saturate(150%);
   backdrop-filter:blur(16px) saturate(150%);
   box-shadow:0 10px 30px -18px rgba(0,0,0,.7);
-  opacity:0;animation:rise .6s var(--ease) forwards;
+  /* `backwards` (not `forwards`) so the resting opacity/transform cascade normally
+     — otherwise the held end-state would override the scroll-collapse rule below */
+  animation:rise .6s var(--ease) backwards;
 }
 .nav a{
   font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
@@ -480,23 +482,39 @@ html.anim .rv.in{opacity:1;transform:none;
   font-family:var(--font-mono);font-size:11px;color:var(--faint)}
 .cmdk-foot b{color:var(--muted);font-weight:500}
 
-/* ---- compact density (denser, more "terminal") ---- */
-html[data-density="compact"] .wrap{padding-top:12px;padding-bottom:40px}
-html[data-density="compact"] header{padding-bottom:16px;margin-bottom:18px}
-html[data-density="compact"] h1{font-size:clamp(26px,4.5vw,38px)}
-html[data-density="compact"] .kpis{gap:8px;margin-bottom:18px}
-html[data-density="compact"] .kpi{padding:12px 14px;border-radius:12px}
-html[data-density="compact"] .kpi .val{font-size:clamp(19px,3.4vw,25px)}
-html[data-density="compact"] .kpi .delta{margin-top:5px}
-html[data-density="compact"] .panel{padding:14px 16px;margin-bottom:14px;border-radius:14px}
-html[data-density="compact"] .panel h2{margin-bottom:12px}
-html[data-density="compact"] .cap{margin-bottom:10px}
-html[data-density="compact"] .xrow{padding-top:6px;padding-bottom:6px}
-html[data-density="compact"] .chartbox{height:240px}
-@media (min-width:761px){
-  html[data-density="compact"] .chartbox{height:320px}
-  html[data-density="compact"] .panel{padding:18px 20px}
+/* ---- scroll-collapse burger nav ---- */
+.nav{transition:opacity .3s var(--ease),transform .3s var(--ease)}
+html.nav-collapsed .nav{opacity:0;transform:translateY(-8px);pointer-events:none}
+/* mini cluster (burger + search), fixed top-left, cross-fades in as the nav fades out */
+.navmini{
+  position:fixed;top:12px;left:16px;z-index:55;display:flex;gap:4px;padding:5px;
+  border:1px solid var(--line);border-radius:999px;background:var(--glass);
+  -webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);
+  box-shadow:0 10px 30px -18px rgba(0,0,0,.7);
+  opacity:0;transform:translateY(-8px) scale(.96);pointer-events:none;
+  transition:opacity .3s var(--ease),transform .3s var(--ease);
 }
+html.nav-collapsed .navmini{opacity:1;transform:none;pointer-events:auto}
+.navmini .burger.on{color:var(--accent);background:rgba(45,212,160,.10)}
+/* dropdown of pages under the burger */
+.navmenu{
+  position:fixed;top:54px;left:16px;z-index:54;min-width:180px;
+  display:flex;flex-direction:column;gap:2px;padding:6px;
+  border:1px solid var(--line);border-radius:14px;background:var(--glass);
+  -webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);
+  box-shadow:var(--shadow-lift);
+  opacity:0;transform:translateY(-8px);pointer-events:none;
+  transition:opacity .22s var(--ease),transform .22s var(--ease);
+}
+.navmenu.on{opacity:1;transform:none;pointer-events:auto}
+.navmenu-item{
+  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);text-decoration:none;padding:9px 12px;border-radius:9px;
+  transition:color .2s,background .2s;
+}
+.navmenu-item:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.navmenu-item.active{color:var(--accent);background:rgba(45,212,160,.10)}
+@media (prefers-reduced-motion:reduce){ .nav,.navmini,.navmenu{transition:none} }
 
 /* ---- consent banner (Consent Mode v2) ---- */
 .consent{
