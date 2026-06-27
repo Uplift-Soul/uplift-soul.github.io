@@ -451,9 +451,8 @@ html.anim .rv.in{opacity:1;transform:none;
   .navtool .kbd{display:none}.navtool{padding:7px 9px}
   .nav{gap:3px}
   .nav a{padding:8px 12px;letter-spacing:.1em}
-  /* let long category names wrap instead of truncating, so the full title and the
-     inline "fragile" tag + expand chevron stay visible on narrow screens */
-  .cat{flex:1 1 0;min-width:0;white-space:normal;overflow:visible;text-overflow:clip}
+  /* keep long category names on one line (ellipsis) so rows don't stack on phones */
+  .cat{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
 
 /* ---- command palette (⌘K) ---- */
