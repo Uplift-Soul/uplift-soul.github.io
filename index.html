@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=22">
+<link rel="stylesheet" href="assets/style.css?v=23">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" integrity="sha384-cVMg8E3QFwTvGCDuK+ET4PD341jF3W8nO1auiXfuZNQkzbUUiBGLsIQUE+b1mxws" crossorigin="anonymous"></script>
 </head>
@@ -91,7 +91,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=23"></script>
+<script src="assets/common.js?v=24"></script>
 <script>
 function renderKpis(data){
   const cur=data.current||[];
@@ -126,13 +126,7 @@ function renderKpis(data){
   if(dl) dl.textContent = "Top "+cur.length+" categories · "+days+" days of data";
 }
 
-/* small coloured "vs last snapshot" badge; blank when no delta is available */
-function deltaHtml(d){
-  if(d==null || !isFinite(d)) return "";
-  if(Math.abs(d) < 0.05) return `<div class="delta flat">● no change <span>vs last snapshot</span></div>`;
-  const up=d>0;
-  return `<div class="delta ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(d).toFixed(1)}% <span>vs last snapshot</span></div>`;
-}
+/* the delta badge (deltaHtml) is shared from common.js */
 
 /* visual only: tick numeric KPI values up from zero (skipped for reduced motion) */
 function countUpKpis(cards){
@@ -195,8 +189,8 @@ function renderTrend(data){
       responsive:true,maintainAspectRatio:false,
       interaction:{mode:"nearest",intersect:false},
       plugins:{
-        legend:{labels:{color:"#cfcfe0",font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
-        tooltip:{backgroundColor:"#12141f",borderColor:"rgba(255,255,255,.1)",borderWidth:1,cornerRadius:10,padding:10,
+        legend:{labels:{color:CHART_THEME.legend,font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
+        tooltip:{backgroundColor:CHART_THEME.tipBg,borderColor:CHART_THEME.tipBorder,borderWidth:1,cornerRadius:10,padding:10,
           titleFont:{family:"IBM Plex Mono"},bodyFont:{family:"IBM Plex Mono"},
           callbacks:{label:c=>` ${c.dataset.label}: ${fullNum(c.parsed.y)}`}}
       },
@@ -206,10 +200,10 @@ function renderTrend(data){
               months when showing All/Archive, so the x-axis always has ticks
               (a forced month unit left the short Live range with none) */
            time:{minUnit:"day"},
-           grid:{color:"rgba(255,255,255,.04)"},
-           ticks:{color:"#8a8aa0",font:{family:"IBM Plex Mono",size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8}},
-        y:{grid:{color:"rgba(255,255,255,.04)"},
-           ticks:{color:"#8a8aa0",font:{family:"IBM Plex Mono",size:10},callback:v=>fmt(v)}}
+           grid:{color:CHART_THEME.grid},
+           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8}},
+        y:{grid:{color:CHART_THEME.grid},
+           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},callback:v=>fmt(v)}}
       }
     }
   });
@@ -240,17 +234,17 @@ function renderConcentration(data){
       responsive:true,maintainAspectRatio:false,
       interaction:{mode:"nearest",intersect:false},
       plugins:{
-        legend:{labels:{color:"#cfcfe0",font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
-        tooltip:{backgroundColor:"#12141f",borderColor:"rgba(255,255,255,.1)",borderWidth:1,cornerRadius:10,padding:10,
+        legend:{labels:{color:CHART_THEME.legend,font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
+        tooltip:{backgroundColor:CHART_THEME.tipBg,borderColor:CHART_THEME.tipBorder,borderWidth:1,cornerRadius:10,padding:10,
           titleFont:{family:"IBM Plex Mono"},bodyFont:{family:"IBM Plex Mono"},
           callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y!=null?c.parsed.y.toFixed(1)+'%':'—'}`}}
       },
       scales:{
-        x:{grid:{color:"rgba(255,255,255,.04)"},
-           ticks:{color:"#8a8aa0",font:{family:"IBM Plex Mono",size:10},maxRotation:0,autoSkip:true,maxTicksLimit:12}},
+        x:{grid:{color:CHART_THEME.grid},
+           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},maxRotation:0,autoSkip:true,maxTicksLimit:12}},
         y:{min:0,max:100,
-           grid:{color:"rgba(255,255,255,.04)"},
-           ticks:{color:"#8a8aa0",font:{family:"IBM Plex Mono",size:10},callback:v=>v+"%"}}
+           grid:{color:CHART_THEME.grid},
+           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},callback:v=>v+"%"}}
       }
     }
   });

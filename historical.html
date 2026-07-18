@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=22">
+<link rel="stylesheet" href="assets/style.css?v=23">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -39,6 +39,10 @@
     <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
   </header>
 
+  <div class="kpis js-err" id="kpis">
+    <div class="kpi lead skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
+  </div>
+
   <section class="panel">
     <h2>Rankings Over Time</h2>
     <div class="cap">How the top categories traded places month to month — rank #1 sits at the top. Lines break across the gap before live collection began.</div>
@@ -57,7 +61,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=23"></script>
+<script src="assets/common.js?v=24"></script>
 <script>
 function renderRankings(data){
   const r = data.rankings || {months:[], series:[]};
@@ -84,20 +88,38 @@ function renderRankings(data){
       responsive:true,maintainAspectRatio:false,
       interaction:{mode:"nearest",intersect:false},
       plugins:{
-        legend:{labels:{color:"#cfcfe0",font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
-        tooltip:{backgroundColor:"#12141f",borderColor:"rgba(255,255,255,.1)",borderWidth:1,cornerRadius:10,padding:10,
+        legend:{labels:{color:CHART_THEME.legend,font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
+        tooltip:{backgroundColor:CHART_THEME.tipBg,borderColor:CHART_THEME.tipBorder,borderWidth:1,cornerRadius:10,padding:10,
           titleFont:{family:"IBM Plex Mono"},bodyFont:{family:"IBM Plex Mono"},
           callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y!=null?'#'+c.parsed.y:'—'}`}}
       },
       scales:{
-        x:{grid:{color:"rgba(255,255,255,.04)"},
-           ticks:{color:"#8a8aa0",font:{family:"IBM Plex Mono",size:10},maxRotation:0,autoSkip:true,maxTicksLimit:12}},
+        x:{grid:{color:CHART_THEME.grid},
+           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},maxRotation:0,autoSkip:true,maxTicksLimit:12}},
         y:{reverse:true,min:1,
-           grid:{color:"rgba(255,255,255,.04)"},
-           ticks:{color:"#8a8aa0",font:{family:"IBM Plex Mono",size:10},stepSize:1,precision:0,callback:v=>"#"+v}}
+           grid:{color:CHART_THEME.grid},
+           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},stepSize:1,precision:0,callback:v=>"#"+v}}
       }
     }
   });
+}
+
+/* lede: the sharpest year-on-year riser and faller from the movers window */
+function renderHistKpis(data){
+  const el=document.getElementById("kpis");
+  const mv=data.movers||{};
+  const g=(mv.gainers||[])[0], f=(mv.fallers||[])[0];
+  if(!el) return;
+  if(!g && !f){ el.remove(); return; }
+  const w=mv.window||{};
+  const yrs=(w.then_year&&w.now_year)?w.then_year+" → "+w.now_year:"year on year";
+  const card=(m,label,lead)=>`
+    <div class="kpi${lead?' lead':''}">
+      <div class="label">${label}</div>
+      <div class="valrow"><div class="val sm">${m?esc(m.category):"—"}</div>${m?deltaHtml(m.pct,yrs):""}</div>
+      <div class="sub">${m?(m.change>=0?"+":"−")+fmt(Math.abs(m.change))+" peak concurrent viewers":""}</div>
+    </div>`;
+  el.innerHTML = card(g,"Biggest Riser",true)+card(f,"Biggest Faller",false);
 }
 
 function renderMovers(data){
@@ -151,12 +173,14 @@ function renderMovers(data){
 function refreshHistorical(data){
   document.querySelectorAll(".chartctl").forEach(e=>e.remove());
   const b=Chart.getChart("bump"); if(b) b.destroy();
+  renderHistKpis(data);
   renderRankings(data);
   renderMovers(data);
 }
 
 loadData("history.json").then(data=>{
   setUpdated(data);
+  renderHistKpis(data);
   renderRankings(data);
   renderMovers(data);
   if(window.startAutoRefresh) startAutoRefresh("history.json", data, refreshHistorical);

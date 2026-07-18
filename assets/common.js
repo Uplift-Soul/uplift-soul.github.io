@@ -68,6 +68,15 @@ function track(name, params){
    Assigned in fixed order, never cycled; the first five carry the default focus set. */
 const PALETTE = ["#1aa87d","#b67e2b","#7d5ae0","#3f86d6","#d15f92","#2dd4a0","#e6b45a","#5aa9ff","#c77dff","#ff9db1"];
 
+/* shared Chart.js chrome colours — Ledger warm greys and green-blacks. One
+   source of truth so the three chart pages can't drift (they used to carry
+   bluish pre-Ledger literals like #8a8aa0 / #12141f individually). */
+const CHART_THEME = {
+  legend:"#c9cec7", tick:"#8f978e",
+  grid:"rgba(255,255,255,.045)",
+  tipBg:"#161a17", tipBorder:"rgba(255,255,255,.12)"
+};
+
 const fmt = n => {
   n = Number(n)||0;
   if (n>=1e6) return (n/1e6).toFixed(n>=1e7?0:1).replace(/\.0$/,'')+"M";
@@ -81,6 +90,16 @@ const fullNum = n => (Number(n)||0).toLocaleString("en-GB");
    some of it community-editable) can't inject markup. Use at every innerHTML
    sink that interpolates data. */
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* small coloured "vs previous" badge for the KPI ledes; blank when no delta.
+   Shared here because every page's lede row uses it. */
+function deltaHtml(d, label){
+  if(d==null || !isFinite(d)) return "";
+  const l = esc(label || "vs last snapshot");
+  if(Math.abs(d) < 0.05) return `<div class="delta flat">● no change <span>${l}</span></div>`;
+  const up = d > 0;
+  return `<div class="delta ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(d).toFixed(1)}% <span>${l}</span></div>`;
+}
 
 function timeAgo(iso){
   if(!iso) return "unknown";
