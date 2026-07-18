@@ -20,6 +20,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are
 
 ---
 
+## [2.1.0] — 2026-07-18 — KPI hierarchy & masthead dateline
+
+### Changed
+- **The "At a glance" row is a lede and its support**, not four equal tiles.
+  Tracked viewers now reads large (Fraunces) with its delta on the same baseline;
+  top category supports it at normal weight. Grid goes `1.6fr 1fr` on desktop,
+  stacked on mobile.
+- **Dateline added to the masthead.** "Categories Live" and "History Depth" left
+  the KPI row for a quiet mono dateline beside the updated pill — they are
+  provenance about the dataset (one is a constant, the other ticks up daily),
+  not findings, and were taking headline space on the strength of neither.
+- Cache-bust bumped (`style.css?v=22`).
+
+### Verified
+- No horizontal overflow at 390px (measured in-page: `scrollWidth == clientWidth`).
+
 ## [2.0.0] — 2026-07-18 — "Ledger" editorial redesign
 
 A ground-up visual overhaul: from the dark-aurora "instrument" look to an
