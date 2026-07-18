@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=22">
+<link rel="stylesheet" href="assets/style.css?v=23">
 </head>
 <body>
 <div class="wrap">
@@ -37,6 +37,10 @@
     </div>
     <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
   </header>
+
+  <div class="kpis js-err" id="kpis">
+    <div class="kpi lead skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
+  </div>
 
   <section class="panel">
     <h2>Publisher Attention Share</h2>
@@ -68,7 +72,7 @@
   <footer>INVST Gaming · Twitch Helix + IGDB data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=23"></script>
+<script src="assets/common.js?v=24"></script>
 <script>
 /* logo tile: IGDB company logo on a light tile, or a coloured monogram fallback
    (used for franchises and anything IGDB has no logo for / that fails to load).
@@ -96,7 +100,7 @@ function renderStandings(hostId, items){
       <div class="pubbody">
         <div class="moverhead">
           <span class="cat">${esc(s.name)}</span>
-          <span class="moverval up">${s.share.toFixed(1)}% · ${fmt(s.viewers)}</span>
+          <span class="moverval">${s.share.toFixed(1)}% · ${fmt(s.viewers)}</span>
         </div>
         <div class="track"><div class="fill teal" data-w="${(s.share/max*100).toFixed(1)}"></div></div>
       </div>
@@ -130,8 +134,31 @@ function renderPubMovers(data){
   requestAnimationFrame(()=>host.querySelectorAll(".fill").forEach(x=>x.style.width=x.dataset.w+"%"));
 }
 
+/* lede: who owns the most attention + the sharpest weekly swing either way */
+function renderPubKpis(data){
+  const el=document.getElementById("kpis");
+  const p=(data.publishers&&data.publishers.publishers)||{};
+  const lead=(p.standings||[])[0];
+  if(!el) return;
+  if(!lead){ el.remove(); return; }
+  const g=(p.gainers||[])[0], f=(p.fallers||[])[0];
+  const swing = (g&&f) ? (Math.abs(g.pct)>=Math.abs(f.pct)?g:f) : (g||f);
+  el.innerHTML=`
+    <div class="kpi lead">
+      <div class="label">Attention Leader (7d)</div>
+      <div class="valrow"><div class="val">${lead.share.toFixed(1)}%</div></div>
+      <div class="sub">${esc(lead.name)} · ${fmt(lead.viewers)} avg daily viewers</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Biggest Swing (7d)</div>
+      <div class="valrow"><div class="val sm">${swing?esc(swing.name):"—"}</div>${swing?deltaHtml(swing.pct,"vs previous 7 days"):""}</div>
+      <div class="sub">${swing?(swing.change>=0?"+":"−")+fmt(Math.abs(swing.change))+" avg daily reach":""}</div>
+    </div>`;
+}
+
 function renderPublishers(data){
   const p = data.publishers || {};
+  renderPubKpis(data);
   renderStandings("pubshare", (p.publishers||{}).standings||[]);
   renderPubMovers(data);
   renderStandings("franchises", (p.franchises||{}).standings||[]);
