@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=22">
+<link rel="stylesheet" href="assets/style.css?v=23">
 </head>
 <body>
 <div class="wrap">
@@ -38,9 +38,13 @@
     <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
   </header>
 
+  <div class="kpis js-err" id="kpis">
+    <div class="kpi lead skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
+  </div>
+
   <section class="panel">
     <h2>Breakout Tracker — New Entrants</h2>
-    <div class="cap">Newly released games (shipped in the last <b id="bo-window">12</b> months) breaking into the top 50 — drafted the week they arrive, then tracked every week after. Numbers are average daily peak viewers, oldest&nbsp;→&nbsp;latest. <span class="btag up">★ breakout</span> <span class="btag down">▼ fading</span> <span class="btag dropped">✕ dropped</span></div>
+    <div class="cap">Newly released games (shipped in the last <b id="bo-window">12</b> months) breaking into the top 50 — drafted the week they arrive, then tracked every week after. Sparkline = average daily peak viewers week by week (oldest&nbsp;→&nbsp;latest, gaps = out of the top 50) · number = the latest ranked week. <span class="btag up">★ breakout</span> <span class="btag down">▼ fading</span> <span class="btag dropped">✕ dropped</span></div>
     <div id="breakout" class="js-err"><div class="skelrows" aria-hidden="true">
       <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
       <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
@@ -50,7 +54,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=23"></script>
+<script src="assets/common.js?v=24"></script>
 <script>
 /* trend label + colour class for each breakout draftee's trajectory */
 const TREND_TAG = {
@@ -62,6 +66,55 @@ const TREND_TAG = {
   "new":    ["new",     "● just in"],
 };
 const boWeek = s => new Date(s).toLocaleDateString("en-GB", {day:"numeric", month:"short"});
+
+/* lede: the strongest new entrant this week + the size of the tracked cohort */
+function renderTrendingKpis(data){
+  const el=document.getElementById("kpis");
+  const bo=data.breakout||{}, cohort=bo.cohort||[];
+  if(!el) return;
+  if(!cohort.length){ el.remove(); return; }
+  const best=cohort.filter(m=>m.latest!=null).sort((a,b)=>b.latest-a.latest)[0];
+  const weeks=(bo.weeks||[]).length;
+  const active=cohort.filter(m=>m.trend!=="dropped").length;
+  el.innerHTML=`
+    <div class="kpi lead">
+      <div class="label">Strongest New Entrant (this week)</div>
+      <div class="valrow"><div class="val">${best?fmt(best.latest):"—"}</div></div>
+      <div class="sub">${best?esc(best.category)+" · avg daily peak viewers":""}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Cohort</div>
+      <div class="valrow"><div class="val sm">${cohort.length} games</div></div>
+      <div class="sub">drafted over ${weeks} week${weeks===1?"":"s"} · <b>${active}</b> still in the top 50</div>
+    </div>`;
+}
+
+/* inline SVG sparkline of a draftee's week-by-week trajectory. Null weeks
+   (out of the top 50) break the line; isolated points render as dots; the
+   latest week gets an end dot. Colour comes from the row's trend class. */
+function sparkSvg(series, cls){
+  const W=96, H=26, P=3;
+  const v=series.map(p=>p.avg_peak);
+  const nums=v.filter(x=>x!=null);
+  if(!nums.length) return "";
+  const mx=Math.max(...nums), mn=Math.min(...nums);
+  const X=i=> v.length===1 ? W/2 : P + i*(W-2*P)/(v.length-1);
+  const Y=x=> mx===mn ? H/2 : H-P-(x-mn)*(H-2*P)/(mx-mn);
+  let d="", pen=false;
+  const dots=[];
+  v.forEach((x,i)=>{
+    if(x==null){ pen=false; return; }
+    d += (pen?" L":" M")+X(i).toFixed(1)+" "+Y(x).toFixed(1);
+    const soloL = i===0 || v[i-1]==null, soloR = i===v.length-1 || v[i+1]==null;
+    if(soloL && soloR) dots.push(`<circle cx="${X(i).toFixed(1)}" cy="${Y(x).toFixed(1)}" r="2"/>`);
+    pen=true;
+  });
+  let li=v.length-1; while(li>=0 && v[li]==null) li--;
+  if(li>=0) dots.push(`<circle cx="${X(li).toFixed(1)}" cy="${Y(v[li]).toFixed(1)}" r="2.4"/>`);
+  return `<svg class="bspark ${cls}" viewBox="0 0 ${W} ${H}" aria-hidden="true">`+
+    `<path d="${d.trim()}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`+
+    dots.join("")+`</svg>`;
+}
 
 function renderBreakout(data){
   const bo = data.breakout || {weeks:[], cohort:[]};
@@ -84,15 +137,14 @@ function renderBreakout(data){
     html += `<div class="bweek"><div class="bweekhead">${head}</div>`;
     for(const m of members){
       const [cls, lbl] = TREND_TAG[m.trend] || TREND_TAG["new"];
-      const traj = m.series.map((p, i) => {
-        const last = i === m.series.length - 1;
-        return p.avg_peak == null
-          ? '<span class="bpt out">—</span>'
-          : `<span class="bpt${last ? " cur" : ""}">${fmt(p.avg_peak)}</span>`;
-      }).join('<span class="barrow">›</span>');
+      /* latest = last week still ranked; dimmed when the game has since dropped out */
+      const nums = m.series.filter(p => p.avg_peak != null);
+      const lastVal = nums.length ? fmt(nums[nums.length-1].avg_peak) : "—";
+      const out = !m.series.length || m.series[m.series.length-1].avg_peak == null;
+      const seq = m.series.map(p => p.avg_peak == null ? "—" : fmt(p.avg_peak)).join(" › ");
       html += `<div class="brow">
           <div class="bmain"><span class="cat">${esc(m.category)}</span><span class="btag ${cls}">${lbl}</span></div>
-          <div class="btraj">${traj}</div>
+          <div class="btraj" title="${esc(seq)}" aria-label="Weekly avg peak: ${esc(seq)}">${sparkSvg(m.series, cls)}<span class="blatest${out?" out":""}">${lastVal}</span></div>
         </div>`;
     }
     html += `</div>`;
@@ -100,10 +152,15 @@ function renderBreakout(data){
   host.innerHTML = html;
 }
 
+function renderTrendingPage(data){
+  renderTrendingKpis(data);
+  renderBreakout(data);
+}
+
 loadData("trending.json").then(data=>{
   setUpdated(data);
-  renderBreakout(data);
-  if(window.startAutoRefresh) startAutoRefresh("trending.json", data, renderBreakout);
+  renderTrendingPage(data);
+  if(window.startAutoRefresh) startAutoRefresh("trending.json", data, renderTrendingPage);
 }).catch(showError);
 </script>
 </body>

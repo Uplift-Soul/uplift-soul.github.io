@@ -62,8 +62,8 @@ body::after{
 ::selection{background:rgba(45,212,160,.28);color:var(--text)}
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#22263a;border-radius:99px;border:3px solid var(--bg)}
-::-webkit-scrollbar-thumb:hover{background:#2e3350}
+::-webkit-scrollbar-thumb{background:#272c28;border-radius:99px;border:3px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#353c36}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 
 .wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:18px 16px 56px}
@@ -169,6 +169,9 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .valrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 .valrow .delta{margin-top:0}
 .kpi.lead .val{font-size:clamp(34px,7vw,46px)}
+/* a lead card whose value is a name, not a figure — mid-size so long titles fit */
+.kpi.lead .val.sm{font-size:clamp(20px,3.6vw,26px)}
+.kpi .sub b{color:var(--teal);font-weight:500}
 
 /* ---- landing hub (home / Overview) ---- */
 .hub{margin:0 0 30px}
@@ -310,12 +313,16 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .brow + .brow{border-top:1px solid rgba(255,255,255,.045)}
 .bmain{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto}
 .bmain .cat{font-weight:500}
-.btraj{display:flex;align-items:center;gap:6px;flex:0 0 auto;
+.btraj{display:flex;align-items:center;gap:9px;flex:0 0 auto;
   font-family:var(--font-mono);font-size:12px;white-space:nowrap}
-.bpt{color:var(--muted)}
-.bpt.cur{color:var(--text);font-weight:600}
-.bpt.out{color:var(--faint)}
-.barrow{color:var(--faint);font-size:11px}
+/* week-by-week trajectory as an inline sparkline; colour = the row's trend state */
+.bspark{width:96px;height:26px;flex:none;display:block;overflow:visible}
+.bspark.up,.bspark.new{color:var(--teal)}
+.bspark.down{color:var(--coral)}
+.bspark.flat{color:var(--muted)}
+.bspark.dropped{color:var(--faint)}
+.blatest{font-family:var(--font-mono);font-size:12.5px;font-weight:600;min-width:44px;text-align:right}
+.blatest.out{color:var(--faint);font-weight:400}
 .btag{font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
   padding:2px 8px;border-radius:99px;white-space:nowrap;border:1px solid transparent;flex:none}
 .btag.up{color:var(--teal);background:rgba(45,212,160,.10);border-color:rgba(45,212,160,.30)}
@@ -333,7 +340,7 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .plogo,.pmono{width:34px;height:34px;border-radius:9px;flex:none;border:1px solid rgba(255,255,255,.10)}
 .plogo{display:grid;place-items:center;overflow:hidden;background:#eef0f6}
 .plogo img{max-width:82%;max-height:76%;object-fit:contain;display:block}
-.pmono{display:grid;place-items:center;font-weight:700;font-size:12.5px;color:#0b0c14}
+.pmono{display:grid;place-items:center;font-weight:700;font-size:12.5px;color:#0e110f}
 
 /* ---- expandable streamer detail (Live page) ---- */
 .xrow{cursor:pointer;padding:9px 10px;margin:0 -10px;border-radius:14px;
