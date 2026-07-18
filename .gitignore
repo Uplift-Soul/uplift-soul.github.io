@@ -8,3 +8,8 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Brand design-system package + concept mockups — a design deliverable synced to
+# Claude Design, not part of the public GitHub Pages site.
+design-system/
+brand-concepts/
