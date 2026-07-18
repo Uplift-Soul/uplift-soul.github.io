@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=22">
+<link rel="stylesheet" href="assets/style.css?v=23">
 </head>
 <body>
 <div class="wrap">
@@ -37,6 +37,10 @@
     </div>
     <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
   </header>
+
+  <div class="kpis js-err" id="kpis">
+    <div class="kpi lead skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
+  </div>
 
   <section class="panel">
     <h2>Top Categories — Now</h2>
@@ -59,8 +63,32 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=23"></script>
+<script src="assets/common.js?v=24"></script>
 <script>
+/* lede: the page's headline figures — total audience now (with movement vs the
+   previous snapshot) and the category leaning hardest on its top 10 */
+function renderLiveKpis(data){
+  const el=document.getElementById("kpis");
+  const cur=data.current||[];
+  if(!el) return;
+  if(!cur.length){ el.remove(); return; }
+  const total=cur.reduce((s,c)=>s+(c.viewership||0),0);
+  const prev=data.previous||null;
+  const delta=(prev&&prev.total)?(total-prev.total)/prev.total*100:null;
+  const frag=[...cur].filter(c=>c.top10_pct!=null).sort((a,b)=>b.top10_pct-a.top10_pct)[0];
+  el.innerHTML=`
+    <div class="kpi lead">
+      <div class="label">Tracked Viewers (now)</div>
+      <div class="valrow"><div class="val">${fmt(total)}</div>${deltaHtml(delta)}</div>
+      <div class="sub">across the top ${cur.length} categories</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Most Top-Heavy</div>
+      <div class="valrow"><div class="val sm">${frag?esc(frag.category):"—"}</div></div>
+      <div class="sub">${frag?`top 10 streamers hold <b>${frag.top10_pct.toFixed(0)}%</b> of its audience`:""}</div>
+    </div>`;
+}
+
 function renderCats(data){
   const cur=data.current||[];
   const el=document.getElementById("cats");
@@ -185,6 +213,7 @@ function renderLive(data){
   /* preserve which category is expanded across an auto-refresh re-render */
   const open=document.querySelector("#cats .xrow.open");
   const openCat=open?open.dataset.cat:null;
+  renderLiveKpis(data);
   renderCats(data);
   renderFragility(data);
   wireExpand(document.getElementById("cats"), data);
