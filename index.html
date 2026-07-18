@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="google-site-verification" content="0txY2jdXtMMCRdWt_aU3gwZ22PjoeJbM5o6yFjJxJLI" />
 <meta name="description" content="INVST Gaming — Twitch category intelligence: live viewership, audience concentration and historical trends.">
-<meta name="theme-color" content="#0a0b13">
+<meta name="theme-color" content="#0e110f">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="INVST Gaming">
 <meta property="og:title" content="INVST Gaming — Overview">
@@ -17,8 +17,8 @@
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=20">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css?v=22">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" integrity="sha384-cVMg8E3QFwTvGCDuK+ET4PD341jF3W8nO1auiXfuZNQkzbUUiBGLsIQUE+b1mxws" crossorigin="anonymous"></script>
 </head>
@@ -38,7 +38,10 @@
       <h1>IN<svg class="vmark" viewBox="0 0 38 42" overflow="visible" aria-hidden="true"><polyline points="5,8 16,36 33,3" stroke-width="9"/></svg>ST <span>Overview</span></h1>
       <div class="wordsub">Gaming</div>
     </div>
-    <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
+    <div class="hmeta">
+      <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
+      <div class="dateline" id="dateline"></div>
+    </div>
   </header>
 
   <section class="hub">
@@ -70,8 +73,7 @@
   <div class="glance">At a glance</div>
 
   <div class="kpis js-err" id="kpis">
-    <div class="kpi skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
-    <div class="kpi skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
+    <div class="kpi lead skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
   </div>
 
   <section class="panel trend">
@@ -89,7 +91,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=22"></script>
+<script src="assets/common.js?v=23"></script>
 <script>
 function renderKpis(data){
   const cur=data.current||[];
@@ -103,20 +105,25 @@ function renderKpis(data){
   const totalDelta = prev ? pct(totalNow, prev.total) : null;
   const topDelta = (prev && top) ? pct(top.viewership, (prev.by_category||{})[top.category]) : null;
 
+  /* Only figures that are actually news belong here: a lede and its support,
+     both of which move and carry a delta. Category count and history depth are
+     provenance about the dataset, not findings, so they sit in the dateline. */
   const cards=[
-    {label:"Top Category", val:top?top.category:"—", sub:top?fullNum(top.viewership)+" viewers":"", sm:true, delta:topDelta},
-    {label:"Tracked Viewers (now)", val:fmt(totalNow), n:totalNow, f:fmt, sub:"across top "+cur.length+" categories", delta:totalDelta},
-    {label:"Categories Live", val:cur.length, n:cur.length, f:String, sub:"in latest snapshot"},
-    {label:"History Depth", val:days, n:days, f:String, sub:"days of data"},
+    {label:"Tracked Viewers (now)", val:fmt(totalNow), n:totalNow, f:fmt,
+     sub:"across the top "+cur.length+" categories", delta:totalDelta, lead:true},
+    {label:"Top Category", val:top?top.category:"—",
+     sub:top?fullNum(top.viewership)+" viewers":"", sm:true, delta:topDelta},
   ];
   document.getElementById("kpis").innerHTML = cards.map(c=>`
-    <div class="kpi">
+    <div class="kpi${c.lead?' lead':''}">
       <div class="label">${c.label}</div>
-      <div class="val ${c.sm?'sm':''}">${esc(c.val)}</div>
-      ${deltaHtml(c.delta)}
+      <div class="valrow"><div class="val ${c.sm?'sm':''}">${esc(c.val)}</div>${deltaHtml(c.delta)}</div>
       <div class="sub">${c.sub||""}</div>
     </div>`).join("");
   countUpKpis(cards);
+
+  const dl=document.getElementById("dateline");
+  if(dl) dl.textContent = "Top "+cur.length+" categories · "+days+" days of data";
 }
 
 /* small coloured "vs last snapshot" badge; blank when no delta is available */

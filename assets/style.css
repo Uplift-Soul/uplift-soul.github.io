@@ -1,29 +1,34 @@
 /* ============================================================
-   INVST Gaming — design system v2
+   INVST Gaming — design system v3 · "Ledger" (editorial data)
    Fonts are loaded via <link> in each page head:
-   Space Grotesk (display) · Inter (body) · IBM Plex Mono (data)
+   Fraunces (display serif) · Inter (body) · IBM Plex Mono (data)
    ============================================================ */
 
 :root{
-  --bg:#0a0b13;
-  --panel-solid:#10121d;
-  --glass:rgba(13,15,25,.72);
-  --line:rgba(255,255,255,.07);
-  --line-2:rgba(255,255,255,.14);
-  --text:#f2f3f9;
-  --muted:#959bb0;
-  --faint:#62687f;
-  --accent:#2dd4a0;
-  --accent-2:#7ee8c9;
-  --accent-dim:#1d8f6e;
-  --purple:#a970ff;
-  --purple-dim:#6f4bb0;
+  --bg:#0e110f;            /* ground — a green-black, not the old bluish near-black */
+  --raise:#161a17;         /* raised surface */
+  --raise-2:#1c211d;       /* deeper raise (tracks, insets) */
+  --panel-solid:#161a17;
+  --glass:rgba(20,24,21,.82);
+  --line:rgba(255,255,255,.10);
+  --line-2:rgba(255,255,255,.20);
+  --text:#eef0ea;
+  --muted:#a3aaa2;
+  --faint:#6a736b;
+  --accent:#2dd4a0;        /* the one signal colour — only ever marks data/state */
+  --accent-2:#6fe3bf;
+  --accent-dim:#1e8f6b;
+  /* Ledger drops the purple co-lead: magnitude bars now read in the single green.
+     The --purple* names are kept so existing rules resolve to green. */
+  --purple:#2dd4a0;
+  --purple-dim:#1e8f6b;
   --teal:#2dd4a0;
-  --coral:#ff5c7a;
-  --glow:rgba(45,212,160,.13);
-  --shadow-lift:0 14px 34px -16px rgba(0,0,0,.6);
+  --coral:#e0576e;         /* critical */
+  --amber:#e6b45a;         /* warning */
+  --glow:rgba(45,212,160,.10);
+  --shadow-lift:0 18px 40px -22px rgba(0,0,0,.7);
   --ease:cubic-bezier(.22,.61,.21,1);
-  --font-display:"Space Grotesk",system-ui,sans-serif;
+  --font-display:"Fraunces",Georgia,serif;
   --font-body:"Inter",system-ui,sans-serif;
   --font-mono:"IBM Plex Mono",ui-monospace,monospace;
 }
@@ -43,22 +48,15 @@ body{
   line-height:1.55;
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
-  background-image:
-    radial-gradient(1100px 600px at 85% -12%, var(--glow), transparent 60%),
-    radial-gradient(900px 540px at -10% -6%, rgba(169,112,255,.10), transparent 55%),
-    radial-gradient(1200px 800px at 50% 115%, rgba(90,169,255,.06), transparent 60%);
-  background-attachment:scroll;   /* fixed on desktop below — mobile Safari repaint bug */
+  /* Ledger: a clean, flat ground — no aurora wash, no dot-grid. One barely-there
+     green vignette top-right gives depth without the "galaxy dashboard" look. */
+  background-image:radial-gradient(900px 520px at 92% -15%, var(--glow), transparent 62%);
+  background-attachment:fixed;
 }
-/* faint dot-grid texture */
-body::before{
-  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:radial-gradient(rgba(255,255,255,.03) 1px, transparent 1px);
-  background-size:24px 24px;
-}
-/* hairline aurora along the very top edge */
+/* a single masthead hairline along the very top edge — one colour, quiet */
 body::after{
   content:"";position:fixed;top:0;left:0;right:0;height:1px;z-index:60;pointer-events:none;
-  background:linear-gradient(90deg,transparent,rgba(45,212,160,.55) 30%,rgba(169,112,255,.45) 70%,transparent);
+  background:linear-gradient(90deg,transparent,rgba(45,212,160,.4) 50%,transparent);
 }
 
 ::selection{background:rgba(45,212,160,.28);color:var(--text)}
@@ -96,8 +94,7 @@ body::after{
 .nav a:hover{color:var(--text);background:rgba(255,255,255,.05)}
 .nav a:active{transform:scale(.95)}
 .nav a.active{
-  color:var(--accent);background:rgba(45,212,160,.10);
-  text-shadow:0 0 18px rgba(45,212,160,.45);
+  color:var(--accent);background:rgba(45,212,160,.12);
 }
 
 /* ---- header / hero ---- */
@@ -116,17 +113,21 @@ header{
   background:linear-gradient(90deg,var(--accent),transparent)}
 h1{
   font-family:var(--font-display);font-weight:700;
-  font-size:clamp(34px,6vw,54px);letter-spacing:-.015em;line-height:1.02;
+  font-size:clamp(34px,6vw,54px);letter-spacing:-.02em;line-height:1.02;
 }
 h1 span{
-  background:linear-gradient(120deg,var(--accent),var(--accent-2));
-  -webkit-background-clip:text;background-clip:text;color:transparent;
+  color:var(--accent-2);font-style:italic;font-weight:600;
 }
-h1 .vmark{height:.72em;width:auto;display:inline-block;vertical-align:baseline;margin:0 .02em;
-  filter:drop-shadow(0 0 10px rgba(45,212,160,.45))}
+h1 .vmark{height:.66em;width:auto;display:inline-block;vertical-align:baseline;margin:0 .02em;
+  filter:drop-shadow(0 0 8px rgba(45,212,160,.35))}
 h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-linejoin:miter}
 .wordsub{font-family:var(--font-mono);font-size:11px;letter-spacing:.5em;
   text-transform:uppercase;color:var(--muted);margin-top:2px}
+/* masthead meta: the status pill plus a dateline. Scope and dataset depth are
+   provenance — the paper's imprint — not findings, so they live here, quiet. */
+.hmeta{display:flex;flex-direction:column;align-items:flex-start;gap:9px}
+.dateline{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint)}
 .status{
   display:inline-flex;align-items:center;gap:10px;
   font-family:var(--font-mono);font-size:12px;color:var(--muted);
@@ -137,7 +138,9 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
   box-shadow:0 0 0 0 rgba(45,212,160,.6);animation:pulse 2.2s infinite}
 
 /* ---- kpi strip ---- */
-.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:28px}
+/* A lede and its support — not four equal slots. Both figures here are news
+   (they move, they carry a delta); scope/depth sit in the dateline instead. */
+.kpis{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:28px}
 .kpi{
   position:relative;overflow:hidden;
   background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
@@ -162,6 +165,10 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .kpi .delta.up{color:var(--teal)}
 .kpi .delta.down{color:var(--coral)}
 .kpi .delta.flat{color:var(--muted)}
+/* the lede: figure and its movement share a baseline, so they read as one line */
+.valrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.valrow .delta{margin-top:0}
+.kpi.lead .val{font-size:clamp(34px,7vw,46px)}
 
 /* ---- landing hub (home / Overview) ---- */
 .hub{margin:0 0 30px}
@@ -186,25 +193,21 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 @media (max-width:900px){ .hubgrid{grid-template-columns:repeat(2,1fr)} }
 @media (max-width:520px){ .hubgrid{grid-template-columns:1fr} }
 
-/* ---- panels ---- */
+/* ---- panels: broadsheet sections, not boxes ----
+   Each section is separated by a masthead hairline and headed by a serif
+   headline over a mono dek — no card, no glass, no shadow. */
 .panel{
-  position:relative;
-  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.012));
-  border:1px solid var(--line);border-radius:20px;
-  padding:20px;margin-bottom:22px;
-  transition:border-color .35s;
+  position:relative;background:transparent;
+  border:0;border-top:1px solid var(--line);border-radius:0;
+  padding:26px 0 6px;margin-bottom:14px;
 }
-.panel:hover{border-color:var(--line-2)}
 .panel h2{
-  font-family:var(--font-display);font-weight:600;font-size:15px;
-  letter-spacing:.06em;text-transform:uppercase;
-  display:flex;align-items:center;gap:10px;margin-bottom:16px;
+  font-family:var(--font-display);font-weight:600;font-size:23px;
+  letter-spacing:-.01em;text-transform:none;
+  display:block;margin-bottom:4px;
 }
-.panel h2::before{content:"";width:18px;height:2px;border-radius:2px;flex:none;
-  background:linear-gradient(90deg,var(--accent),transparent)}
-.panel.alt h2::before{background:linear-gradient(90deg,var(--teal),transparent)}
 .cap{font-family:var(--font-mono);font-size:11px;color:var(--muted);
-  margin:-4px 0 18px;letter-spacing:.02em;line-height:1.6;
+  margin:4px 0 18px;letter-spacing:.02em;line-height:1.6;
   white-space:normal;overflow-wrap:break-word;max-width:72ch}
 
 /* ---- category bars ---- */
@@ -223,7 +226,7 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .rank{font-family:var(--font-mono);font-size:12px;color:var(--faint);text-align:right}
 .barwrap{position:relative;min-width:0}
 .barname{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:10px;min-width:0}
-.cat{font-weight:500;font-size:14px;letter-spacing:.01em;min-width:0;
+.cat{font-family:var(--font-display);font-weight:600;font-size:15.5px;letter-spacing:-.005em;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .conc{font-family:var(--font-mono);font-size:11px;color:var(--muted);white-space:nowrap}
 .conc b{color:var(--teal);font-weight:500}
@@ -238,6 +241,10 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
   animation:sheen 1.4s 1.1s var(--ease) forwards}
 .fill.teal{background:linear-gradient(90deg,#17a87d,var(--teal))}
 .fill.red{background:linear-gradient(90deg,#b03a55,var(--coral))}
+/* fragility fill reads its own severity — green / amber / red, like the meter card */
+.fill.ok{background:linear-gradient(90deg,var(--accent-dim),var(--accent))}
+.fill.warn{background:linear-gradient(90deg,#b98a2f,var(--amber))}
+.fill.crit{background:linear-gradient(90deg,#c04d63,var(--coral))}
 .views{font-family:var(--font-mono);font-size:13px;font-weight:500;text-align:right}
 /* expand caret — fades in on hover, rotates to point down when the row is open */
 .xcaret{font-family:var(--font-mono);font-size:15px;line-height:1;text-align:center;color:var(--faint);
@@ -247,7 +254,7 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 
 /* fragile tag */
 .tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
-  color:#ffb37a;border:1px solid rgba(255,179,122,.4);background:rgba(255,179,122,.07);
+  color:var(--amber);border:1px solid rgba(230,180,90,.4);background:rgba(230,180,90,.08);
   border-radius:5px;padding:1px 6px;margin-left:7px;vertical-align:middle}
 
 /* ---- charts + controls ---- */
@@ -408,9 +415,9 @@ html.anim .rv.in{opacity:1;transform:none;
 
 /* ---- scale up to desktop (mobile-first base above) ---- */
 @media (min-width:761px){
-  body{background-attachment:fixed}
   .wrap{padding:28px 24px 64px}
-  .kpis{grid-template-columns:repeat(4,1fr);gap:16px}
+  .kpis{grid-template-columns:1.6fr 1fr;gap:16px}
+  .hmeta{align-items:flex-end}
   .panel{padding:26px;margin-bottom:26px}
   .chartbox{height:380px}
   .row{grid-template-columns:32px minmax(0,1fr) 104px;gap:16px}

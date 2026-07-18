@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="INVST Gaming — live Twitch snapshot: top categories right now, with the streamers behind them and fragility rankings.">
-<meta name="theme-color" content="#0a0b13">
+<meta name="theme-color" content="#0e110f">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="INVST Gaming">
 <meta property="og:title" content="INVST Gaming — Live">
@@ -16,8 +16,8 @@
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=20">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css?v=22">
 </head>
 <body>
 <div class="wrap">
@@ -59,7 +59,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=22"></script>
+<script src="assets/common.js?v=23"></script>
 <script>
 function renderCats(data){
   const cur=data.current||[];
@@ -115,7 +115,7 @@ function renderFragility(data){
           <span class="cat">${esc(c.category)}${c.top10_pct>=80?' <span class="tag">fragile</span>':''}</span>
           <span class="conc">${fmt(c.viewership)} viewers</span>
         </div>
-        <div class="track"><div class="fill teal" data-w="${c.top10_pct.toFixed(1)}"></div></div>
+        <div class="track"><div class="fill ${c.top10_pct>=95?'crit':c.top10_pct>=80?'warn':'ok'}" data-w="${c.top10_pct.toFixed(1)}"></div></div>
       </div>
       <div class="views">${c.top10_pct.toFixed(0)}%</div>
       <span class="xcaret" aria-hidden="true">›</span>
