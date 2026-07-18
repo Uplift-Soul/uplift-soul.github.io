@@ -63,7 +63,10 @@ function track(name, params){
   if (typeof window.gtag === "function") gtag("event", name, params || {});
 }
 
-const PALETTE = ["#2dd4a0","#a970ff","#ff7eb6","#ffb347","#5aa9ff","#9dff6e","#ff5c7a","#c08bff","#13e3c5","#ffd166"];
+/* Ledger categorical palette — validated colorblind-safe (dataviz skill:
+   lightness band, chroma floor, adjacent-pair CVD separation, contrast all pass).
+   Assigned in fixed order, never cycled; the first five carry the default focus set. */
+const PALETTE = ["#1aa87d","#b67e2b","#7d5ae0","#3f86d6","#d15f92","#2dd4a0","#e6b45a","#5aa9ff","#c77dff","#ff9db1"];
 
 const fmt = n => {
   n = Number(n)||0;
