@@ -129,12 +129,25 @@ function loadData(primary){
   });
 }
 
+/* data older than this means the Pi has missed 2+ of its 3-hourly runs
+   (keep in sync with MAX_AGE_HOURS in .github/workflows/freshness.yml) */
+const STALE_HOURS = 7;
+
 /* update the "updated X ago" status pill if the page has one,
-   and keep it ticking so a left-open tab stays honest */
+   and keep it ticking so a left-open tab stays honest; flags stale data in amber */
 function setUpdated(data){
   const el=document.getElementById("updated");
   if(!el) return;
-  const paint=()=>el.textContent = "updated "+timeAgo(data.latest_snapshot||data.generated_at);
+  const iso=data.latest_snapshot||data.generated_at;
+  const paint=()=>{
+    const stale = !!iso && (Date.now()-new Date(iso))/36e5 > STALE_HOURS;
+    el.textContent = (stale?"data delayed · ":"")+"updated "+timeAgo(iso);
+    const pill=el.closest(".status");
+    if(pill){
+      pill.classList.toggle("stale", stale);
+      pill.title = stale ? "The data feed hasn't refreshed recently, so these figures aren't live." : "";
+    }
+  };
   paint();
   clearInterval(setUpdated._t);
   setUpdated._t=setInterval(paint, 60000);

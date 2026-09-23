@@ -136,6 +136,9 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 }
 .dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex:none;
   box-shadow:0 0 0 0 rgba(45,212,160,.6);animation:pulse 2.2s infinite}
+/* data feed hasn't refreshed recently: amber, and stop pulsing (it isn't live) */
+.status.stale{color:var(--amber);border-color:rgba(230,180,90,.45);background:rgba(230,180,90,.07)}
+.status.stale .dot{background:var(--amber);animation:none;box-shadow:none}
 
 /* ---- kpi strip ---- */
 /* A lede and its support — not four equal slots. Both figures here are news
