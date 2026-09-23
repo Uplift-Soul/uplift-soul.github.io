@@ -1,0 +1,66 @@
+name: Data freshness check
+
+# The Pi pushes fresh data every 3h. If the live site's data gets older than
+# MAX_AGE_HOURS (i.e. 2+ runs missed), fail — GitHub emails on a failed scheduled
+# run — and open a "stale-data" issue. The issue auto-closes once data is fresh.
+# Runs here, not on the Pi, so a frozen Pi can't hide its own outage.
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"   # every 2h, off the top of the hour
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: freshness
+  cancel-in-progress: true
+
+env:
+  MAX_AGE_HOURS: 7           # keep in sync with STALE_HOURS in assets/common.js
+  DATA_URL: https://invstgaming.co.uk/overview.json
+  LABEL: stale-data
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check live data age
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          # cache-buster so we see what visitors see, not a stale CDN copy
+          if ts=$(curl -fsS --retry 3 "$DATA_URL?t=$(date +%s)" | jq -er '.latest_snapshot // .generated_at'); then
+            age_h=$(( ( $(date +%s) - $(date -d "$ts" +%s) ) / 3600 ))
+            echo "Latest snapshot: $ts (${age_h}h old, limit ${MAX_AGE_HOURS}h)"
+            problem=""
+            [ "$age_h" -gt "$MAX_AGE_HOURS" ] && problem="Live data is **${age_h}h old** (latest snapshot \`$ts\`); the limit is ${MAX_AGE_HOURS}h."
+          else
+            problem="Couldn't read \`latest_snapshot\` from $DATA_URL (site down or JSON broken)."
+          fi
+
+          open=$(gh issue list --label "$LABEL" --state open --json number --jq '.[0].number // empty')
+
+          if [ -n "$problem" ]; then
+            echo "::error::$problem"
+            if [ -z "$open" ]; then
+              gh label create "$LABEL" --color E6B45A --description "Data feed from the Pi is stale" 2>/dev/null || true
+              gh issue create --label "$LABEL" --title "Data feed is stale — check the Pi" --body "$problem
+
+          Likely causes, in order: Pi frozen / powered off / offline; repo on the Pi corrupted (\`git status\` errors); cron not running; git push auth expired.
+
+          This issue closes itself once fresh data is live. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            else
+              echo "Issue #$open already open; not duplicating."
+            fi
+            exit 1
+          fi
+
+          if [ -n "$open" ]; then
+            gh issue close "$open" --comment "Data is fresh again (latest snapshot \`$ts\`). Closing automatically."
+          fi
+          echo "Data is fresh."
