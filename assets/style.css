@@ -215,6 +215,8 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .cap{font-family:var(--font-mono);font-size:11px;color:var(--muted);
   margin:4px 0 18px;letter-spacing:.02em;line-height:1.6;
   white-space:normal;overflow-wrap:break-word;max-width:72ch}
+.cap a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
+.cap a:hover{border-bottom-color:var(--accent)}
 
 /* ---- category bars ---- */
 .rows{display:flex;flex-direction:column;gap:2px}
@@ -397,6 +399,10 @@ footer{font-family:var(--font-mono);font-size:11px;color:var(--faint);
   letter-spacing:.06em}
 footer a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .2s}
 footer a:hover{border-bottom-color:var(--accent)}
+/* "Privacy settings" — a button (it reopens the consent banner) styled like a footer link */
+footer .privacy-link{font:inherit;letter-spacing:inherit;color:var(--muted);background:none;border:0;
+  border-bottom:1px solid transparent;padding:0;cursor:pointer;transition:color .2s,border-color .2s}
+footer .privacy-link:hover{color:var(--text);border-bottom-color:var(--muted)}
 .loading,.error{font-family:var(--font-mono);color:var(--muted);font-size:13px;padding:14px 0}
 .loading{animation:fadepulse 1.6s ease infinite}
 .error{color:var(--coral)}
@@ -567,5 +573,6 @@ html.nav-collapsed .navmini{opacity:1;transform:none;pointer-events:auto}
 @keyframes consent-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @media (max-width:760px){
   .consent{bottom:10px;flex-direction:column;align-items:stretch}
+  .consent-msg{flex:none}   /* the 280px row basis would become a 280px height when stacked */
   .consent-acts{justify-content:flex-end}
 }

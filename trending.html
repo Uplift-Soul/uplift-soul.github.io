@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=24">
+<link rel="stylesheet" href="assets/style.css?v=25">
 </head>
 <body>
 <div class="wrap">
@@ -54,7 +54,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=25"></script>
+<script src="assets/common.js?v=26"></script>
 <script>
 /* trend label + colour class for each breakout draftee's trajectory */
 const TREND_TAG = {
@@ -65,7 +65,9 @@ const TREND_TAG = {
   dropped:  ["dropped", "✕ dropped out"],
   "new":    ["new",     "● just in"],
 };
-const boWeek = s => new Date(s).toLocaleDateString("en-GB", {day:"numeric", month:"short"});
+/* week dates are date-only ("2026-10-16" = UTC midnight): format in UTC so
+   visitors west of GMT don't see the previous day */
+const boWeek = s => new Date(s).toLocaleDateString("en-GB", {day:"numeric", month:"short", timeZone:"UTC"});
 
 /* lede: the strongest new entrant this week + the size of the tracked cohort */
 function renderTrendingKpis(data){
@@ -73,7 +75,8 @@ function renderTrendingKpis(data){
   const bo=data.breakout||{}, cohort=bo.cohort||[];
   if(!el) return;
   if(!cohort.length){ el.remove(); return; }
-  const best=cohort.filter(m=>m.latest!=null).sort((a,b)=>b.latest-a.latest)[0];
+  /* only games still in the top 50 — a dropped game's `latest` is from an old week */
+  const best=cohort.filter(m=>m.latest!=null&&m.trend!=="dropped").sort((a,b)=>b.latest-a.latest)[0];
   const weeks=(bo.weeks||[]).length;
   const active=cohort.filter(m=>m.trend!=="dropped").length;
   el.innerHTML=`
