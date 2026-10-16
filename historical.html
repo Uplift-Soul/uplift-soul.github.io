@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=24">
+<link rel="stylesheet" href="assets/style.css?v=25">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -32,7 +32,7 @@
 
   <header>
     <div class="brand">
-      <div class="kicker">Historical · Mar 2024 – Jun 2025</div>
+      <div class="kicker" id="kicker">Historical · monthly rankings</div>
       <h1>IN<svg class="vmark" viewBox="0 0 38 42" overflow="visible" aria-hidden="true"><polyline points="5,8 16,36 33,3" stroke-width="9"/></svg>ST <span>History</span></h1>
       <div class="wordsub">Gaming</div>
     </div>
@@ -61,15 +61,21 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=25"></script>
+<script src="assets/common.js?v=26"></script>
 <script>
+/* months / window dates are date-only strings (UTC midnight) — always format them
+   in UTC, or visitors west of GMT see the previous month/day */
+const fmtUTC = (s, o) => new Date(s).toLocaleDateString("en-GB", Object.assign({timeZone:"UTC"}, o));
+
 function renderRankings(data){
   const r = data.rankings || {months:[], series:[]};
   if(!r.series || !r.series.length) return;
-  const labels = r.months.map(m=>{
-    const d=new Date(m);
-    return d.toLocaleDateString("en-GB",{month:"short",year:"2-digit"});
-  });
+  /* masthead kicker: the span the bump chart actually covers */
+  const k = document.getElementById("kicker"), ms = r.months || [];
+  if(k && ms.length)
+    k.textContent = "Historical · " + fmtUTC(ms[0],{month:"short",year:"numeric"}) +
+      " – " + fmtUTC(ms[ms.length-1],{month:"short",year:"numeric"});
+  const labels = r.months.map(m=>fmtUTC(m,{month:"short",year:"2-digit"}));
   const datasets = r.series.map((s,i)=>({
     label:s.category,
     data:s.rank,
@@ -133,16 +139,16 @@ function renderMovers(data){
     if(w.now_from && w.now_to){
       /* month-to-date window: show the exact day span + both years */
       const d0 = new Date(w.now_from), d1 = new Date(w.now_to);
-      const mon = d => d.toLocaleDateString("en-GB",{month:"short"});
-      const sameMonth = d0.getMonth()===d1.getMonth() && d0.getFullYear()===d1.getFullYear();
+      const mon = d => fmtUTC(d,{month:"short"});
+      const sameMonth = d0.getUTCMonth()===d1.getUTCMonth() && d0.getUTCFullYear()===d1.getUTCFullYear();
       const range = sameMonth
-        ? `${d0.getDate()}–${d1.getDate()} ${mon(d1)}`
-        : `${d0.getDate()} ${mon(d0)} – ${d1.getDate()} ${mon(d1)}`;
+        ? `${d0.getUTCDate()}–${d1.getUTCDate()} ${mon(d1)}`
+        : `${d0.getUTCDate()} ${mon(d0)} – ${d1.getUTCDate()} ${mon(d1)}`;
       cap.textContent =
         `Risers and fallers by peak concurrent viewers — ${range}, ${w.then_year} vs ${w.now_year}.`;
     } else if(w.from && w.to){
       /* legacy month-year window (frontend served before the Pi regenerated data) */
-      const fmtM = s => new Date(s).toLocaleDateString("en-GB",{month:"short",year:"numeric"});
+      const fmtM = s => fmtUTC(s,{month:"short",year:"numeric"});
       cap.textContent =
         `Risers and fallers by peak concurrent viewers — comparing ${fmtM(w.from)} against ${fmtM(w.to)}.`;
     }

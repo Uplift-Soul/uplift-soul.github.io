@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://invstgaming.co.uk/sitemap.xml

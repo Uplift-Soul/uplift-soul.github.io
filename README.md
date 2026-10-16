@@ -46,7 +46,7 @@ Twitch Helix API
 - **`publish.py`** reads the database and emits the JSON the frontend consumes, then
   commits and pushes.
 - The **frontend** is vanilla HTML/CSS/JS (no build step) plus Chart.js. It fetches
-  the JSON and auto-refreshes every 90 seconds.
+  the JSON and auto-refreshes every 90 seconds (paused while the tab is hidden).
 - **Deployment** is a GitHub Actions workflow (`.github/workflows/deploy.yml`) with
   `cancel-in-progress`, so the frequent data pushes never jam the deploy queue.
 
@@ -90,14 +90,18 @@ Twitch Helix API
 ├── trending.html         # Trending (Breakout Tracker)
 ├── publishers.html       # Publishers (attention share)
 ├── historical.html       # Historical
+├── 404.html              # not-found page (absolute asset paths — served at any depth)
 ├── assets/               # css · js · images
 │   ├── style.css
 │   ├── common.js
 │   ├── favicon.svg
 │   └── og.png
 ├── *.json                # data published by the Pi (overview / live / history / trending / publishers / data)
-├── .github/workflows/    # GitHub Pages deploy
+├── .github/workflows/    # deploy.yml (Pages deploy) · freshness.yml (stale-data alarm)
+├── robots.txt · sitemap.xml
 ├── CNAME                 # custom domain
+├── CHANGELOG.md          # release notes (mirrored as git tags)
+├── CLAUDE.md             # notes for AI assistants / contributors
 ├── LICENSE
 └── README.md
 ```
@@ -119,7 +123,9 @@ locally use the `.html` form (`/live.html`).
 - **Clean URLs** — link internally without `.html` (`/live`, not `live.html`). A new
   page must link clean *and* be registered in the `common.js` command palette.
 - **Cache busting** — bump the `?v=N` query on `assets/style.css` / `assets/common.js`
-  whenever they change.
+  on every page (including `404.html`) whenever they change.
+- **Dates** — date-only strings from the JSON (`"2026-10-01"`) are UTC midnight; format
+  them with `timeZone:"UTC"` or visitors west of GMT see the previous day/month.
 - **Deploy** — every push to `main` triggers the Pages Actions workflow.
 
 ## License

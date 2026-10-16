@@ -120,11 +120,14 @@ function loadData(primary){
   let p = grab(primary || "data.json");
   if(primary) p = p.catch(()=>grab("data.json"));
   return p.then(data=>{
-    /* viewership ranking (current is sorted) — used to pick chart focus */
-    window.__VIEW_RANK = Object.fromEntries(
-      (data.current||[]).map((c,i)=>[c.category,i]));
-    /* category list for the command palette (empty on pages without `current`) */
-    if((data.current||[]).length) window.__CATS = data.current.map(c=>c.category);
+    /* only slices carrying `current` update these globals, so a side fetch (e.g. the
+       hub's teaser slices) can't wipe the page's ranking or palette list */
+    if((data.current||[]).length){
+      /* viewership ranking (current is sorted) — used to pick chart focus */
+      window.__VIEW_RANK = Object.fromEntries(data.current.map((c,i)=>[c.category,i]));
+      /* category list for the command palette */
+      window.__CATS = data.current.map(c=>c.category);
+    }
     return data;
   });
 }
@@ -158,7 +161,7 @@ function showError(e){
   const el=document.getElementById("updated");
   if(el) el.textContent = "data unavailable";
   document.querySelectorAll(".js-err").forEach(x=>{
-    x.innerHTML = '<div class="error">Couldn\'t load data.json ('+e.message+').</div>';
+    x.innerHTML = '<div class="error">Couldn\'t load data ('+esc(e.message)+').</div>';
   });
 }
 
@@ -168,9 +171,6 @@ const IS_MOBILE = window.matchMedia && window.matchMedia("(max-width:760px)").ma
 
 if (window.Chart) {
 
-  /* coordinated chart entrance that matches the site's easing, so canvases
-     ease in with the panels around them instead of snapping. Disabled under
-     reduced motion. */
   /* Chart animations are disabled. Chart.js 4.4.1's animator throws
      "this._fn is not a function" (Animation.tick → Animator._update) when our
      line charts transition: the range pills swap in datasets with different
@@ -180,12 +180,6 @@ if (window.Chart) {
      scroll and controls looked dead. Rendering without animation sidesteps the
      bug entirely and applies control changes instantly. */
   Chart.defaults.animation = false;
-
-  if (IS_MOBILE) {
-    const L = Chart.defaults.plugins.legend.labels;
-    L.boxWidth = 8; L.boxHeight = 8; L.padding = 8;
-    L.font = {family:"Inter", size:10};
-  }
 
   /* start focused: only the 5 categories with the highest current
      viewership are visible; the rest wait one tap away in the legend.
@@ -212,25 +206,8 @@ if (window.Chart) {
     }
   });
 
-  /* legend behaviour:
-     tap a visible item  -> solo it (everything else hides)
-     tap a greyed item   -> add it to the view
-     tap the soloed item -> restore exactly what was visible before */
-  Chart.defaults.plugins.legend.onClick = (e, item, legend) => {
-    const chart = legend.chart, i = item.datasetIndex;
-    if (chart.$solo === i) {
-      chart.$soloPrev.forEach((v,k) => chart.setDatasetVisibility(k, v));
-      chart.$solo = null; chart.$soloPrev = null;
-    } else if (!chart.isDatasetVisible(i)) {
-      chart.setDatasetVisibility(i, true);
-    } else {
-      if (chart.$solo == null)
-        chart.$soloPrev = chart.data.datasets.map((_,k) => chart.isDatasetVisible(k));
-      chart.data.datasets.forEach((_,k) => chart.setDatasetVisibility(k, k === i));
-      chart.$solo = i;
-    }
-    chart.update();
-  };
+  /* (series are toggled by the chips injected below — the Chart.js legend is
+     hidden on every chart, so it needs no click handler or mobile sizing) */
 }
 
 
@@ -323,7 +300,7 @@ if (window.Chart) {
         const c = document.createElement("button");
         c.className = "chip";
         c.style.setProperty("--c", d.borderColor);
-        c.innerHTML = '<span class="dotc"></span>' + d.label;
+        c.innerHTML = '<span class="dotc"></span>' + esc(d.label);
         const paint = () => c.classList.toggle("on", chart.isDatasetVisible(i));
         c.onclick = () => {
           const vis = !chart.isDatasetVisible(i);
@@ -377,7 +354,7 @@ if (window.Chart) {
    actually changes, so it's cheap between the 3-hourly data cycles. */
 function startAutoRefresh(file, initial, onChange, intervalMs){
   let lastSnap = (initial && (initial.latest_snapshot || initial.generated_at)) || null;
-  setInterval(() => {
+  const poll = () => {
     loadData(file).then(data => {
       const snap = data.latest_snapshot || data.generated_at;
       if (snap && snap !== lastSnap){
@@ -386,7 +363,10 @@ function startAutoRefresh(file, initial, onChange, intervalMs){
         try { onChange(data); } catch(e){ /* keep polling even if a render throws */ }
       }
     }).catch(()=>{});
-  }, intervalMs || 90000);
+  };
+  /* skip polls while the tab is hidden; check once as soon as it's shown again */
+  setInterval(() => { if(!document.hidden) poll(); }, intervalMs || 90000);
+  document.addEventListener("visibilitychange", () => { if(!document.hidden) poll(); });
 }
 
 /* briefly highlight a value that just changed on refresh */
@@ -406,7 +386,7 @@ function flash(el){
   const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
   /* ---- palette ---- */
-  let root, input, list, items = [], active = 0, open = false;
+  let root, input, list, items = [], active = 0, open = false, lastFocus = null;
   const PAGES = [
     {label:"Overview",   hint:"Trends & concentration", href:"/"},
     {label:"Live",       hint:"Top categories now",     href:"/live"},
@@ -421,8 +401,9 @@ function flash(el){
     root.innerHTML =
       '<div class="cmdk-backdrop"></div>'+
       '<div class="cmdk-panel" role="dialog" aria-modal="true" aria-label="Command palette">'+
-        '<input class="cmdk-input" type="text" placeholder="Jump to a page or category…" aria-label="Search" autocomplete="off" spellcheck="false">'+
-        '<div class="cmdk-list" role="listbox"></div>'+
+        '<input class="cmdk-input" type="text" placeholder="Jump to a page or category…" aria-label="Search" autocomplete="off" spellcheck="false"'+
+          ' role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-autocomplete="list">'+
+        '<div class="cmdk-list" id="cmdk-list" role="listbox"></div>'+
         '<div class="cmdk-foot"><span><b>↑↓</b> navigate</span><span><b>↵</b> open</span><span><b>esc</b> close</span></div>'+
       '</div>';
     document.body.appendChild(root);
@@ -441,7 +422,7 @@ function flash(el){
     items = allItems().filter(it => !q || it.label.toLowerCase().includes(q));
     active = 0;
     list.innerHTML = items.map((it,i) =>
-      `<div class="cmdk-item${i===0?" active":""}" data-i="${i}" role="option">
+      `<div class="cmdk-item${i===0?" active":""}" id="cmdk-opt-${i}" data-i="${i}" role="option" aria-selected="${i===0}">
          <span class="cmdk-ic">${it.cat?"#":"›"}</span>
          <span class="cmdk-lbl">${esc(it.label)}</span>
          <span class="cmdk-hint">${esc(it.hint)}</span>
@@ -450,13 +431,24 @@ function flash(el){
       el.addEventListener("mousemove", () => setActive(+el.dataset.i));
       el.addEventListener("click", () => activate(+el.dataset.i));
     });
+    syncActive();
+  };
+
+  /* tell assistive tech which option is highlighted (focus stays in the input) */
+  const syncActive = () => {
+    if(items.length) input.setAttribute("aria-activedescendant", "cmdk-opt-"+active);
+    else input.removeAttribute("aria-activedescendant");
   };
 
   const setActive = i => {
     active = i;
     const els = list.querySelectorAll(".cmdk-item");
-    els.forEach((el,k) => el.classList.toggle("active", k===i));
+    els.forEach((el,k) => {
+      el.classList.toggle("active", k===i);
+      el.setAttribute("aria-selected", k===i ? "true" : "false");
+    });
     if(els[i]) els[i].scrollIntoView({block:"nearest"});
+    syncActive();
   };
 
   /* normalise any path/href to a page id so same-page detection works whether the
@@ -477,15 +469,23 @@ function flash(el){
     else if(e.key==="ArrowUp"){ e.preventDefault(); setActive(Math.max(0, active-1)); }
     else if(e.key==="Enter"){ e.preventDefault(); activate(active); }
     else if(e.key==="Escape"){ e.preventDefault(); close(); }
+    else if(e.key==="Tab"){ e.preventDefault(); }   // keep focus inside the modal
   };
 
   const openPalette = () => {
     if(!root) buildPalette();
+    lastFocus = document.activeElement;
     open = true; root.classList.add("on");
     input.value = ""; render(); input.focus();
     track("palette_open");
   };
-  function close(){ if(root){ open=false; root.classList.remove("on"); } }
+  function close(){
+    if(!root || !open) return;
+    open = false; root.classList.remove("on");
+    /* hand focus back to whatever opened the palette */
+    if(lastFocus && lastFocus.focus && document.contains(lastFocus)) lastFocus.focus();
+    lastFocus = null;
+  }
 
   document.addEventListener("keydown", e => {
     if((e.ctrlKey||e.metaKey) && (e.key==="k"||e.key==="K")){ e.preventDefault(); open ? close() : openPalette(); }
@@ -578,27 +578,38 @@ function flash(el){
 
 
 /* --- consent banner ----------------------------------------------------------
-   Shown once, only until the visitor chooses. Accept flips Consent Mode's
+   Shown once, until the visitor chooses. Accept flips Consent Mode's
    analytics_storage to granted (so cookies + full analytics turn on for this and
-   future visits); Decline leaves it denied. Either way the choice is persisted,
-   so the banner never reappears. Skipped entirely when a choice already exists. */
+   future visits); Decline leaves it denied. Either way the choice is persisted, so
+   the banner doesn't reappear on its own. A "Privacy settings" link in every footer
+   reopens it, so consent can be withdrawn as easily as it was given (UK GDPR) —
+   declining after accepting flips consent back to denied and clears GA's cookies. */
 (() => {
-  if (window.__consent === "granted" || window.__consent === "denied") return;
-  const build = () => {
+  /* remove GA's first-party cookies (_ga, _ga_<id>) on this host and its parent domain */
+  const clearGaCookies = () => {
+    const host = location.hostname, doms = ["", host, "." + host.replace(/^www\./, "")];
+    document.cookie.split(";").map(c => c.split("=")[0].trim())
+      .filter(n => /^_ga(_|$)/.test(n))
+      .forEach(n => doms.forEach(d =>
+        document.cookie = n + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/" + (d ? "; domain=" + d : "")));
+  };
+
+  const build = fromLink => {
     if (document.querySelector(".consent")) return;
     const bar = document.createElement("div");
     bar.className = "consent";
     bar.setAttribute("role", "dialog");
     bar.setAttribute("aria-label", "Privacy choice");
     bar.innerHTML =
-      '<p class="consent-msg">This site uses <b>Google Analytics</b> to see how it’s used — no ads, nothing sold on. Analytics cookies stay off until you accept.</p>' +
+      '<p class="consent-msg">This site uses <b>Google Analytics</b> to see how it’s used — no ads, nothing sold on. Analytics cookies stay off until you accept, and you can change your mind any time via <b>Privacy settings</b> in the footer.</p>' +
       '<div class="consent-acts">' +
         '<button class="consent-btn" type="button" data-consent="denied">Decline</button>' +
         '<button class="consent-btn ok" type="button" data-consent="granted">Accept</button>' +
       '</div>';
     const choose = v => {
-      if (v === "granted" && typeof window.gtag === "function")
-        gtag("consent", "update", { analytics_storage: "granted" });
+      if (typeof window.gtag === "function")
+        gtag("consent", "update", { analytics_storage: v });
+      if (v === "denied") clearGaCookies();
       try { localStorage.setItem("invst-consent", v); } catch(e){}
       window.__consent = v;
       bar.remove();
@@ -606,7 +617,27 @@ function flash(el){
     bar.querySelectorAll("[data-consent]").forEach(b =>
       b.addEventListener("click", () => choose(b.getAttribute("data-consent"))));
     document.body.appendChild(bar);
+    /* reopened from the footer: move focus to the current choice */
+    if (fromLink === true) {
+      const cur = bar.querySelector('[data-consent="' + window.__consent + '"]');
+      (cur || bar.querySelector(".consent-btn.ok")).focus({preventScroll:true});
+    }
   };
-  if (document.readyState !== "loading") build();
-  else document.addEventListener("DOMContentLoaded", build);
+
+  /* footer link that reopens the banner */
+  const addLink = () => {
+    const f = document.querySelector("footer");
+    if (!f || f.querySelector(".privacy-link")) return;
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "privacy-link"; b.textContent = "Privacy settings";
+    b.addEventListener("click", () => build(true));
+    f.append(" · ", b);
+  };
+
+  const init = () => {
+    addLink();
+    if (window.__consent !== "granted" && window.__consent !== "denied") build();
+  };
+  if (document.readyState !== "loading") init();
+  else document.addEventListener("DOMContentLoaded", init);
 })();
