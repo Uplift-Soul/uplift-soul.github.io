@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=24">
+<link rel="stylesheet" href="assets/style.css?v=25">
 </head>
 <body>
 <div class="wrap">
@@ -63,7 +63,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=25"></script>
+<script src="assets/common.js?v=26"></script>
 <script>
 /* lede: the page's headline figures — total audience now (with movement vs the
    previous snapshot) and the category leaning hardest on its top 10 */
@@ -178,7 +178,7 @@ function wireExpand(el, data){
     x.addEventListener("transitionend", () => x.remove(), {once:true});
     setTimeout(() => x.remove(), 450);
   };
-  const toggle = row => {
+  const toggle = (row, silent) => {
     const next = row.nextElementSibling;
     const wasOpen = next && next.classList.contains("xpwrap") && !next.classList.contains("closing");
     el.querySelectorAll(".xpwrap").forEach(close);
@@ -198,9 +198,10 @@ function wireExpand(el, data){
       d.addEventListener("transitionend", () => { d.style.height = ""; }, {once:true});
       row.classList.add("open");
       row.setAttribute("aria-expanded","true");
-      track("category_expand", { category: row.dataset.cat });
+      if(!silent) track("category_expand", { category: row.dataset.cat });
     }
   };
+  el._toggle = toggle;   // lets a re-render restore the open row without tracking it
   el.querySelectorAll(".xrow").forEach(row => {
     row.addEventListener("click", () => toggle(row));
     row.addEventListener("keydown", e => {
@@ -219,8 +220,9 @@ function renderLive(data){
   wireExpand(document.getElementById("cats"), data);
   wireExpand(document.getElementById("frag"), data);
   if(openCat){
-    const row=document.querySelector('#cats .xrow[data-cat="'+CSS.escape(openCat)+'"]');
-    if(row) row.click();
+    const cats=document.getElementById("cats");
+    const row=cats.querySelector('.xrow[data-cat="'+CSS.escape(openCat)+'"]');
+    if(row) cats._toggle(row, true);   // silent: a refresh isn't a user expand
   }
 }
 
