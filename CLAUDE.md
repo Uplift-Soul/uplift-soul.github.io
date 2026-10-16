@@ -50,10 +50,17 @@ Twitch Helix API + IGDB ──(cron ~3h, on a Raspberry Pi)──► PostgreSQL 
   must: link clean in every nav block, set its `og:url`, and register in the `PAGES` array
   in `common.js`.
 - **Cache-busting** — bump the `?v=N` on `assets/style.css` / `assets/common.js` (on **every**
-  page) whenever you change them, or browsers serve stale assets and pages break.
+  page, including `404.html`) whenever you change them, or browsers serve stale assets and pages break.
+- **`404.html`** is served for any missing path at any depth, so it uses absolute asset URLs
+  (`/assets/...`). It's not a nav page, so it isn't in `PAGES` or `sitemap.xml`.
+- **Dates** — date-only JSON strings (`"2026-10-01"`) parse as UTC midnight; always format
+  them with `timeZone:"UTC"` (and `getUTC*`), or the Americas see the previous day/month.
 - `loadData(slice)` fetches a page's JSON slice and falls back to `data.json` if absent.
-- Analytics: GA4 (`gtag.js`) is installed once in `common.js`; custom events
-  `hub_card_click` / `nav_click`.
+- Analytics: GA4 (`gtag.js`) is installed once in `common.js` behind Consent Mode v2
+  (denied by default); custom events `hub_card_click` / `nav_click` plus interaction events
+  via `track()`. A "Privacy settings" footer link (injected by `common.js`) reopens the
+  consent banner so consent can be withdrawn.
+- Releases: record changes in `CHANGELOG.md` and tag them `vMAJOR.MINOR.PATCH`.
 
 ## Deploy
 - **Site**: every push to `main` triggers the Pages GitHub Actions workflow

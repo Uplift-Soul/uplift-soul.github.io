@@ -13,3 +13,6 @@ venv/
 # Claude Design, not part of the public GitHub Pages site.
 design-system/
 brand-concepts/
+
+# Local editor workspace file
+*.code-workspace
