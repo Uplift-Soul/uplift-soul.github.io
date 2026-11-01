@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=25">
+<link rel="stylesheet" href="assets/style.css?v=26">
 </head>
 <body>
 <div class="wrap">
@@ -53,7 +53,7 @@
 
   <section class="panel alt">
     <h2>Gaining &amp; Losing Attention</h2>
-    <div class="cap">Biggest publisher swings this week — average daily reach over the last 7 days vs the previous 7. A faller at −100% means its games dropped out of the tracked top categories.</div>
+    <div class="cap">Biggest publisher swings this week, ranked by viewers gained or lost — average daily reach over the last 7 days vs the previous 7. A faller at −100% means its games dropped out of the tracked top categories.</div>
     <div id="pubmovers" class="js-err"><div class="skelrows" aria-hidden="true">
       <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
       <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
@@ -72,7 +72,7 @@
   <footer>INVST Gaming · Twitch Helix + IGDB data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=26"></script>
+<script src="assets/common.js?v=27"></script>
 <script>
 /* logo tile: IGDB company logo on a light tile, or a coloured monogram fallback
    (used for franchises and anything IGDB has no logo for / that fails to load).
@@ -112,7 +112,9 @@ function renderStandings(hostId, items){
 function renderPubMovers(data){
   const p = (data.publishers && data.publishers.publishers) || {gainers:[], fallers:[]};
   const host = document.getElementById("pubmovers");
-  const g = p.gainers||[], f = p.fallers||[];
+  /* biggest swing in viewers first (the backend may still send them ordered by %) */
+  const g = [...(p.gainers||[])].sort((a,b)=>b.change-a.change);
+  const f = [...(p.fallers||[])].sort((a,b)=>a.change-b.change);
   if(!g.length && !f.length){ host.innerHTML='<div class="error">No weekly movement yet.</div>'; return; }
   const col = (items, dir) => {
     const max = Math.max(1, ...items.map(m=>Math.abs(m.change)));
@@ -142,7 +144,8 @@ function renderPubKpis(data){
   if(!el) return;
   if(!lead){ el.remove(); return; }
   const g=(p.gainers||[])[0], f=(p.fallers||[])[0];
-  const swing = (g&&f) ? (Math.abs(g.pct)>=Math.abs(f.pct)?g:f) : (g||f);
+  /* by the size of the swing in viewers — a % swing is dominated by tiny bases */
+  const swing = (g&&f) ? (Math.abs(g.change)>=Math.abs(f.change)?g:f) : (g||f);
   el.innerHTML=`
     <div class="kpi lead">
       <div class="label">Attention Leader (7d)</div>
