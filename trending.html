@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=25">
+<link rel="stylesheet" href="assets/style.css?v=26">
 </head>
 <body>
 <div class="wrap">
@@ -54,7 +54,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=26"></script>
+<script src="assets/common.js?v=27"></script>
 <script>
 /* trend label + colour class for each breakout draftee's trajectory */
 const TREND_TAG = {
@@ -128,16 +128,21 @@ function renderBreakout(data){
     host.innerHTML = '<div class="error">No new entrants yet — waiting for a newly released game to break into the top 50.</div>';
     return;
   }
-  /* newest week first, one group per week, skip weeks that drafted nobody */
+  /* newest week first, one group per week, skip weeks that drafted nobody. Games
+     still in the top 50 lead each week; dropped-out ones are folded away behind the
+     toggle at the bottom (a week where every game dropped hides entirely) */
   const weeks = (bo.weeks || []).slice().reverse();
+  const nDropped = bo.cohort.filter(m => m.trend === "dropped").length;
   let html = "";
   for(const w of weeks){
-    const members = bo.cohort.filter(m => m.entry_week === w.week_no);
+    const members = bo.cohort.filter(m => m.entry_week === w.week_no)
+      .sort((a,b) => (a.trend==="dropped") - (b.trend==="dropped"));
     if(!members.length) continue;
     const head = w.complete
       ? `Week of ${boWeek(w.start)}`
       : `This week <span class="bprov">in progress</span>`;
-    html += `<div class="bweek"><div class="bweekhead">${head}</div>`;
+    const allOut = members.every(m => m.trend === "dropped");
+    html += `<div class="bweek${allOut?" bout":""}"><div class="bweekhead">${head}</div>`;
     for(const m of members){
       const [cls, lbl] = TREND_TAG[m.trend] || TREND_TAG["new"];
       /* latest = last week still ranked; dimmed when the game has since dropped out */
@@ -145,14 +150,30 @@ function renderBreakout(data){
       const lastVal = nums.length ? fmt(nums[nums.length-1].avg_peak) : "—";
       const out = !m.series.length || m.series[m.series.length-1].avg_peak == null;
       const seq = m.series.map(p => p.avg_peak == null ? "—" : fmt(p.avg_peak)).join(" › ");
-      html += `<div class="brow">
+      html += `<div class="brow${m.trend==="dropped"?" bout":""}">
           <div class="bmain"><span class="cat">${esc(m.category)}</span><span class="btag ${cls}">${lbl}</span></div>
           <div class="btraj" title="${esc(seq)}" aria-label="Weekly avg peak: ${esc(seq)}">${sparkSvg(m.series, cls)}<span class="blatest${out?" out":""}">${lastVal}</span></div>
         </div>`;
     }
     html += `</div>`;
   }
+  if(nDropped) html += `<button type="button" class="bmore" aria-expanded="${!!renderBreakout.showAll}"></button>`;
   host.innerHTML = html;
+  /* the open/closed choice survives auto-refresh re-renders */
+  const btn = host.querySelector(".bmore");
+  const paint = () => {
+    const on = !!renderBreakout.showAll;
+    host.classList.toggle("bhide", !on);
+    if(btn){
+      btn.textContent = on ? "Hide dropped-out games" : `Show ${nDropped} dropped-out game${nDropped===1?"":"s"}`;
+      btn.setAttribute("aria-expanded", on);
+    }
+  };
+  if(btn) btn.onclick = () => {
+    renderBreakout.showAll = !renderBreakout.showAll; paint();
+    track("breakout_toggle_dropped", { visible: renderBreakout.showAll ? "show" : "hide" });
+  };
+  paint();
 }
 
 function renderTrendingPage(data){

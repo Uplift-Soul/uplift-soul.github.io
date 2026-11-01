@@ -20,6 +20,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are
 
 ---
 
+## [2.5.0] — 2026-11-01 — Design pass & mobile
+
+### Changed
+- **Time charts open on the live feed** (Overview trend + concentration); Archive
+  and All are one tap away. The archive→live gap no longer eats ~40% of the x-axis.
+- **Historical: the bump chart is now a rank heatmap** — categories × months, each
+  cell the month's rank (single-hue scale, brightest = #1, number printed in the
+  cell), with Archive / Live / All. Chart.js is no longer loaded on that page.
+- **Trending: games still in the top 50 lead**; dropped-out games fold behind a
+  "Show N dropped-out games" toggle (state survives auto-refresh).
+- **Mobile**: the nav is the burger + search cluster from the start (the five tabs
+  wrapped into a two-row pill); Live category names get the full row with the
+  "top 10" note beneath; chart chips are one swipeable row; x-axis capped at 4
+  labels; Trending rows keep the sparkline beside the name; tighter kicker.
+- Publisher gainers/losers and the "Biggest swing" KPI rank by viewers gained or
+  lost, not %.
+- KPI and Live deltas use `previous.day_ago` ("vs this time yesterday") when the
+  backend sends it, falling back to the previous snapshot.
+- Cache-bust bumped (`style.css?v=26`, `common.js?v=27`).
+
+### Fixed
+- Live rows showed a stray "›" on its own line (a fourth grid child in a
+  three-column row); the redundant caret element is removed.
+- Bars showed a grey smear after the fill — the sheen animation ended parked past
+  the fill's edge; the fill now clips it.
+
 ## [2.4.0] — 2026-10-16 — Review fixes
 
 ### Fixed
