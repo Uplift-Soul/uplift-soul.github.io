@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=25">
+<link rel="stylesheet" href="assets/style.css?v=26">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" integrity="sha384-cVMg8E3QFwTvGCDuK+ET4PD341jF3W8nO1auiXfuZNQkzbUUiBGLsIQUE+b1mxws" crossorigin="anonymous"></script>
 </head>
@@ -78,20 +78,20 @@
 
   <section class="panel trend">
     <h2>Viewership Trend</h2>
-    <div class="cap">Peak concurrent viewers per category, smoothed to a 7-day rolling average. The break in the lines is the gap before the live pipeline began collecting.</div>
+    <div class="cap">Peak concurrent viewers per category, smoothed to a 7-day rolling average. Opens on the live feed; Archive and All add the 2024–25 data (the break in the lines is the gap before live collection began).</div>
     <div class="chartbox"><canvas id="trend"></canvas></div>
   </section>
 
   <section class="panel conc alt">
     <h2>Concentration Over Time</h2>
-    <div class="cap">Share of each category's viewers held by its top 10 streamers, by month — higher means more top-heavy. The break in the lines is the gap before the live pipeline began collecting.</div>
+    <div class="cap">Share of each category's viewers held by its top 10 streamers, by month — higher means more top-heavy. Opens on the live feed; Archive and All add the 2024–25 data.</div>
     <div class="chartbox"><canvas id="conc"></canvas></div>
   </section>
 
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=26"></script>
+<script src="assets/common.js?v=27"></script>
 <script>
 function renderKpis(data){
   const cur=data.current||[];
@@ -99,11 +99,12 @@ function renderKpis(data){
   const top=cur[0];
   const days=new Set((data.trend||[]).map(t=>t.day)).size;
 
-  /* deltas vs the previous snapshot, when the backend provides one */
-  const prev=data.previous||null;
+  /* deltas vs this time yesterday (or the previous snapshot — see deltaBase) */
+  const prev=deltaBase(data);
   const pct=(now,before)=> (before==null||before===0||!isFinite(before)) ? null : (now-before)/before*100;
   const totalDelta = prev ? pct(totalNow, prev.total) : null;
   const topDelta = (prev && top) ? pct(top.viewership, (prev.by_category||{})[top.category]) : null;
+  const vsLabel = prev ? prev.label : undefined;
 
   /* Only figures that are actually news belong here: a lede and its support,
      both of which move and carry a delta. Category count and history depth are
@@ -117,7 +118,7 @@ function renderKpis(data){
   document.getElementById("kpis").innerHTML = cards.map(c=>`
     <div class="kpi${c.lead?' lead':''}">
       <div class="label">${c.label}</div>
-      <div class="valrow"><div class="val ${c.sm?'sm':''}">${esc(c.val)}</div>${deltaHtml(c.delta)}</div>
+      <div class="valrow"><div class="val ${c.sm?'sm':''}">${esc(c.val)}</div>${deltaHtml(c.delta, vsLabel)}</div>
       <div class="sub">${c.sub||""}</div>
     </div>`).join("");
   countUpKpis(cards);

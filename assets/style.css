@@ -220,7 +220,7 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 
 /* ---- category bars ---- */
 .rows{display:flex;flex-direction:column;gap:2px}
-.row{display:grid;grid-template-columns:26px minmax(0,1fr) 76px 14px;align-items:center;gap:10px}
+.row{display:grid;grid-template-columns:26px minmax(0,1fr) 76px;align-items:center;gap:10px}
 /* clickable rows (Live): fluid hover surface + press feel, reusing the nav hover idiom */
 .xrow{cursor:pointer;border-radius:12px;padding:8px 10px;margin:0 -10px;
   transition:background .22s var(--ease),box-shadow .22s var(--ease),transform .12s var(--ease)}
@@ -240,7 +240,9 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .conc b{color:var(--teal);font-weight:500}
 .track{height:7px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden}
 .fill{
-  position:relative;height:100%;border-radius:99px;width:0;
+  /* overflow:hidden clips the sheen — it ends parked past the fill's right edge,
+     where it used to show on the empty track as a grey smear */
+  position:relative;height:100%;border-radius:99px;width:0;overflow:hidden;
   background:linear-gradient(90deg,var(--purple-dim),var(--purple));
   transition:width 1.1s var(--ease);
 }
@@ -254,11 +256,6 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .fill.warn{background:linear-gradient(90deg,#b98a2f,var(--amber))}
 .fill.crit{background:linear-gradient(90deg,#c04d63,var(--coral))}
 .views{font-family:var(--font-mono);font-size:13px;font-weight:500;text-align:right}
-/* expand caret — fades in on hover, rotates to point down when the row is open */
-.xcaret{font-family:var(--font-mono);font-size:15px;line-height:1;text-align:center;color:var(--faint);
-  opacity:.4;transition:transform .3s var(--ease),opacity .2s,color .2s}
-.xrow:hover .xcaret{opacity:.9;color:var(--muted)}
-.xrow.open .xcaret{transform:rotate(90deg);color:var(--accent);opacity:1}
 
 /* fragile tag */
 .tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
@@ -335,8 +332,34 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 .btag.flat{color:var(--muted);background:rgba(255,255,255,.05)}
 .btag.new{color:var(--accent);background:rgba(45,212,160,.10);border-color:rgba(45,212,160,.25)}
 .btag.dropped{color:var(--faint);background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)}
+/* dropped-out games fold away until the "show" toggle is pressed */
+.bhide .brow.bout,.bhide .bweek.bout{display:none}
+.bmore{display:block;margin:6px auto 0;font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;
+  padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:transparent;
+  color:var(--muted);cursor:pointer;transition:color .2s,border-color .2s,transform .15s var(--ease)}
+.bmore:hover{color:var(--text);border-color:var(--line-2)}
+.bmore:active{transform:scale(.96)}
 @media (max-width:760px){
-  .brow{flex-direction:column;align-items:flex-start;gap:7px}
+  /* keep the sparkline beside the name; the tag wraps under the name instead */
+  .bmain{flex-wrap:wrap;gap:4px 8px}
+  .bspark{width:60px}
+  .blatest{min-width:38px}
+}
+
+/* ---- rank heatmap (Historical page) ---- */
+.hmscroll{overflow-x:auto;padding-bottom:4px}
+.hmgrid{display:grid;gap:3px;min-width:min-content}
+.hmh{font-family:var(--font-mono);font-size:10px;color:var(--muted);text-align:center;
+  display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:4px;line-height:1.3}
+.hmh span{color:var(--faint)}
+.hmname{font-family:var(--font-display);font-weight:600;font-size:13.5px;align-self:center;
+  padding-right:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  position:sticky;left:0;z-index:1;background:var(--bg)}
+.hmc{height:30px;border-radius:5px;display:grid;place-items:center;
+  font-family:var(--font-mono);font-size:11.5px;font-weight:600;cursor:default}
+.hmc.empty{background:rgba(255,255,255,.025)}
+@media (max-width:760px){
+  .hmname{white-space:normal;font-size:12.5px;line-height:1.2}
 }
 
 /* ---- publisher / franchise logo tiles (Publishers page) ---- */
@@ -477,6 +500,14 @@ html.anim .rv.in{opacity:1;transform:none;
   /* let long category names wrap instead of truncating, so the full title and the
      inline "fragile" tag + expand chevron stay visible on narrow screens */
   .cat{flex:1 1 0;min-width:0;white-space:normal;overflow:visible;text-overflow:clip}
+  /* name gets the full row width; the "top 10 =" note drops beneath it */
+  .barname{flex-direction:column;align-items:flex-start;gap:2px}
+  .barname .cat{flex:none}
+  /* one swipeable row of category chips instead of four stacked rows */
+  .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px 2px}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none}
+  .kicker{letter-spacing:.18em}
 }
 
 /* ---- command palette (⌘K) ---- */
@@ -538,6 +569,13 @@ html.nav-collapsed .navmini{opacity:1;transform:none;pointer-events:auto}
 .navmenu-item:hover{color:var(--text);background:rgba(255,255,255,.05)}
 .navmenu-item.active{color:var(--accent);background:rgba(45,212,160,.10)}
 @media (prefers-reduced-motion:reduce){ .nav,.navmini,.navmenu{transition:none} }
+/* phones: five tabs don't fit one line (they wrapped into a lopsided two-row pill),
+   so the burger + search cluster is the nav from the start */
+@media (max-width:760px){
+  .nav{display:none}
+  .navmini{opacity:1;transform:none;pointer-events:auto}
+  .wrap{padding-top:68px}
+}
 
 /* ---- consent banner (Consent Mode v2) ---- */
 .consent{

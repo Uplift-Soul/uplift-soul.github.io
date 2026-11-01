@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=25">
+<link rel="stylesheet" href="assets/style.css?v=26">
 </head>
 <body>
 <div class="wrap">
@@ -63,7 +63,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=26"></script>
+<script src="assets/common.js?v=27"></script>
 <script>
 /* lede: the page's headline figures — total audience now (with movement vs the
    previous snapshot) and the category leaning hardest on its top 10 */
@@ -73,13 +73,13 @@ function renderLiveKpis(data){
   if(!el) return;
   if(!cur.length){ el.remove(); return; }
   const total=cur.reduce((s,c)=>s+(c.viewership||0),0);
-  const prev=data.previous||null;
+  const prev=deltaBase(data);
   const delta=(prev&&prev.total)?(total-prev.total)/prev.total*100:null;
   const frag=[...cur].filter(c=>c.top10_pct!=null).sort((a,b)=>b.top10_pct-a.top10_pct)[0];
   el.innerHTML=`
     <div class="kpi lead">
       <div class="label">Tracked Viewers (now)</div>
-      <div class="valrow"><div class="val">${fmt(total)}</div>${deltaHtml(delta)}</div>
+      <div class="valrow"><div class="val">${fmt(total)}</div>${deltaHtml(delta, prev&&prev.label)}</div>
       <div class="sub">across the top ${cur.length} categories</div>
     </div>
     <div class="kpi">
@@ -94,7 +94,8 @@ function renderCats(data){
   const el=document.getElementById("cats");
   if(!cur.length){el.innerHTML='<div class="error">No current data yet.</div>';return;}
   const max=Math.max(...cur.map(c=>c.viewership||0))||1;
-  const prevByCat=(data.previous&&data.previous.by_category)||{};
+  const base=deltaBase(data);
+  const prevByCat=(base&&base.by_category)||{};
   el.innerHTML = '<div class="rows">'+cur.map((c,i)=>`
     <div class="row xrow" data-cat="${esc(c.category)}" role="button" tabindex="0" aria-expanded="false" style="--i:${i}">
       <div class="rank">${String(c.rank).padStart(2,'0')}</div>
@@ -106,7 +107,6 @@ function renderCats(data){
         <div class="track"><div class="fill" data-w="${(c.viewership/max*100).toFixed(1)}"></div></div>
       </div>
       <div class="views"><span class="vval">${fmt(c.viewership)}</span>${moveHtml(c,prevByCat)}</div>
-      <span class="xcaret" aria-hidden="true">›</span>
     </div>`).join("")+'</div>';
   requestAnimationFrame(()=>el.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%"));
   /* flash any viewer counts that changed since the previous render (auto-refresh) */
@@ -146,7 +146,6 @@ function renderFragility(data){
         <div class="track"><div class="fill ${c.top10_pct>=95?'crit':c.top10_pct>=80?'warn':'ok'}" data-w="${c.top10_pct.toFixed(1)}"></div></div>
       </div>
       <div class="views">${c.top10_pct.toFixed(0)}%</div>
-      <span class="xcaret" aria-hidden="true">›</span>
     </div>`).join("")+'</div>';
   requestAnimationFrame(()=>el.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%"));
 }
