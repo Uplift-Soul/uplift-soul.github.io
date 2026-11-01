@@ -101,6 +101,15 @@ function deltaHtml(d, label){
   return `<div class="delta ${up?'up':'down'}">${up?'▲':'▼'} ${Math.abs(d).toFixed(1)}% <span>${l}</span></div>`;
 }
 
+/* what "now" is compared against: the snapshot nearest 24h ago when the backend
+   sends one (previous.day_ago), since snapshot-to-snapshot swings mostly track the
+   time of day; otherwise the previous snapshot. Returns null when there's neither. */
+function deltaBase(data){
+  const p = data.previous || null;
+  if(p && p.day_ago) return Object.assign({label:"vs this time yesterday"}, p.day_ago);
+  return p ? Object.assign({label:"vs last snapshot"}, p) : null;
+}
+
 function timeAgo(iso){
   if(!iso) return "unknown";
   const d=new Date(iso), now=new Date(), mins=Math.round((now-d)/60000);
@@ -190,9 +199,14 @@ if (window.Chart) {
       if (chart.$focusDone) return;
       chart.$focusDone = true;
       const sets = chart.data.datasets || [];
-      if (IS_MOBILE) sets.forEach(d => {
-        if (d.type !== "bar") { d.pointRadius = 0; d.borderWidth = 1.4; }
-      });
+      if (IS_MOBILE) {
+        sets.forEach(d => {
+          if (d.type !== "bar") { d.pointRadius = 0; d.borderWidth = 1.4; }
+        });
+        /* fewer x labels on a phone, or the dates run into each other */
+        const xt = chart.options.scales && chart.options.scales.x && chart.options.scales.x.ticks;
+        if (xt) xt.maxTicksLimit = 4;
+      }
       const reversed = chart.options && chart.options.scales &&
                        chart.options.scales.y && chart.options.scales.y.reverse;
       if (sets.length > 5 && !reversed) {
@@ -280,11 +294,17 @@ if (window.Chart) {
         ranges.push(["All", slice(0, end)]);
       }
 
+      /* open on the live era — the archive→live gap would otherwise eat ~40% of the
+         x-axis on All. Applied here, before the first render, so there's no flash. */
+      const live = ranges.findIndex(([t]) => t === "Live");
+      const start = live >= 0 ? live : ranges.length-1;
+      ranges[start][1]();
+
       const ctl = document.createElement("div"); ctl.className = "chartctl";
       const pills = document.createElement("div"); pills.className = "pills";
       ranges.forEach(([t, apply], i) => {
         const b = document.createElement("button");
-        b.className = "cpill" + (i === ranges.length-1 ? " on" : "");
+        b.className = "cpill" + (i === start ? " on" : "");
         b.textContent = t;
         b.onclick = () => {
           pills.querySelectorAll(".cpill").forEach(x => x.classList.remove("on"));

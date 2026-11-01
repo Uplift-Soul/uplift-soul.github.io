@@ -17,8 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=25">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="assets/style.css?v=26">
 </head>
 <body>
 <div class="wrap">
@@ -45,8 +44,11 @@
 
   <section class="panel">
     <h2>Rankings Over Time</h2>
-    <div class="cap">How the top categories traded places month to month — rank #1 sits at the top. Lines break across the gap before live collection began.</div>
-    <div class="chartbox js-err"><canvas id="bump"></canvas></div>
+    <div class="cap">Each cell is a category's rank among all Twitch categories that month (by average viewers) — the brighter, the higher. Blank = not in the tracked top 50 that month, or no data collected.</div>
+    <div id="ranks" class="js-err"><div class="skelrows" aria-hidden="true">
+      <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
+      <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
+    </div></div>
   </section>
 
   <section class="panel alt">
@@ -61,7 +63,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=26"></script>
+<script src="assets/common.js?v=27"></script>
 <script>
 /* months / window dates are date-only strings (UTC midnight) — always format them
    in UTC, or visitors west of GMT see the previous month/day */
@@ -75,39 +77,58 @@ function renderRankings(data){
   if(k && ms.length)
     k.textContent = "Historical · " + fmtUTC(ms[0],{month:"short",year:"numeric"}) +
       " – " + fmtUTC(ms[ms.length-1],{month:"short",year:"numeric"});
-  const labels = r.months.map(m=>fmtUTC(m,{month:"short",year:"2-digit"}));
-  const datasets = r.series.map((s,i)=>({
-    label:s.category,
-    data:s.rank,
-    borderColor:PALETTE[i%PALETTE.length],
-    backgroundColor:PALETTE[i%PALETTE.length],
-    borderWidth:2.4,pointRadius:3,pointHoverRadius:6,tension:.3,
-    spanGaps:false,
-  }));
-  const cv=document.getElementById("bump");
-  cv.setAttribute("role","img");
-  cv.setAttribute("aria-label","Bump chart: monthly Twitch category rankings — rank 1 at the top.");
-  new Chart(cv,{
-    type:"line",
-    data:{labels,datasets},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      interaction:{mode:"nearest",intersect:false},
-      plugins:{
-        legend:{labels:{color:CHART_THEME.legend,font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
-        tooltip:{backgroundColor:CHART_THEME.tipBg,borderColor:CHART_THEME.tipBorder,borderWidth:1,cornerRadius:10,padding:10,
-          titleFont:{family:"IBM Plex Mono"},bodyFont:{family:"IBM Plex Mono"},
-          callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y!=null?'#'+c.parsed.y:'—'}`}}
-      },
-      scales:{
-        x:{grid:{color:CHART_THEME.grid},
-           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},maxRotation:0,autoSkip:true,maxTicksLimit:12}},
-        y:{reverse:true,min:1,
-           grid:{color:CHART_THEME.grid},
-           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},stepSize:1,precision:0,callback:v=>"#"+v}}
-      }
-    }
+  const host = document.getElementById("ranks");
+
+  /* collection eras = runs of months with any data, so the pills match the charts'
+     Archive / Live / All and the year-long gap never fills the grid by default */
+  const has = i => r.series.some(s => s.rank[i] != null);
+  const isl = [];
+  ms.forEach((_, i) => { if(!has(i)) return;
+    const last = isl[isl.length-1];
+    if(last && last[1] === i-1) last[1] = i; else isl.push([i,i]);
   });
+  const ranges = [];
+  if(isl.length > 1){
+    ranges.push(["Archive", isl[0][0], isl[isl.length-2][1]]);
+    ranges.push(["Live", isl[isl.length-1][0], isl[isl.length-1][1]]);
+  }
+  ranges.push(["All", 0, ms.length-1]);
+  if(!ranges.some(x => x[0] === renderRankings.range)) renderRankings.range = isl.length > 1 ? "Live" : "All";
+
+  /* sequential, one hue: rank 1 = full accent, fading to a faint wash by #20 */
+  const shade = n => {
+    const a = Math.max(.07, 1 - (n-1) * .05);
+    return `background:rgba(45,212,160,${a.toFixed(2)});color:${a > .55 ? "#0e110f" : "var(--text)"}`;
+  };
+
+  const draw = () => {
+    const [, a, b] = ranges.find(x => x[0] === renderRankings.range);
+    const idx = []; for(let i = a; i <= b; i++) idx.push(i);
+    /* rows: categories ranked in this window, steadiest near the top first */
+    const score = s => idx.reduce((t,i) => t + (s.rank[i] != null ? Math.max(0, 21 - s.rank[i]) : 0), 0);
+    const rows = r.series.filter(s => idx.some(i => s.rank[i] != null))
+      .sort((x,y) => score(y) - score(x));
+    const head = idx.map(i => `<div class="hmh">${fmtUTC(ms[i],{month:"short"})}<span>${fmtUTC(ms[i],{year:"2-digit"})}</span></div>`).join("");
+    const body = rows.map(s => `<div class="hmname">${esc(s.category)}</div>` + idx.map(i => {
+      const n = s.rank[i], m = fmtUTC(ms[i],{month:"long",year:"numeric"});
+      return n == null
+        ? `<div class="hmc empty" title="${esc(s.category)} · ${m}: not ranked"></div>`
+        : `<div class="hmc" style="${shade(n)}" title="${esc(s.category)} · ${m}: #${n}">${n}</div>`;
+    }).join("")).join("");
+    host.querySelector(".hmgrid").style.gridTemplateColumns = `minmax(110px,170px) repeat(${idx.length}, minmax(34px,1fr))`;
+    host.querySelector(".hmgrid").innerHTML = `<div class="hmh"></div>` + head + body;
+    const sc = host.querySelector(".hmscroll"); sc.scrollLeft = sc.scrollWidth;   // latest month in view
+  };
+
+  host.innerHTML = `<div class="chartctl"><div class="pills">` +
+    ranges.map(([t]) => `<button type="button" class="cpill${t===renderRankings.range?" on":""}">${t}</button>`).join("") +
+    `</div></div><div class="hmscroll"><div class="hmgrid" role="group" aria-label="Monthly Twitch category ranks"></div></div>`;
+  host.querySelectorAll(".cpill").forEach(btn => btn.onclick = () => {
+    host.querySelectorAll(".cpill").forEach(x => x.classList.toggle("on", x === btn));
+    renderRankings.range = btn.textContent; draw();
+    track("chart_range_select", { range: btn.textContent, chart: "ranks" });
+  });
+  draw();
 }
 
 /* lede: the sharpest year-on-year riser and faller from the movers window */
@@ -177,8 +198,6 @@ function renderMovers(data){
 }
 
 function refreshHistorical(data){
-  document.querySelectorAll(".chartctl").forEach(e=>e.remove());
-  const b=Chart.getChart("bump"); if(b) b.destroy();
   renderHistKpis(data);
   renderRankings(data);
   renderMovers(data);
