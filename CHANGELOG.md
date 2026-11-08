@@ -20,6 +20,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are
 
 ---
 
+## [2.6.0] — 2026-11-08 — Cookieless analytics & privacy page
+
+### Added
+- **Umami (cookieless) visit counting** on every page, loaded once from
+  `common.js`. It stores nothing on the device, so it needs no consent and counts
+  every visitor — the real traffic totals, where GA only sees those who accept.
+  Local test servers are excluded (`data-domains`).
+- `track()` and the hub-card / nav click events now go to both GA and Umami.
+- **Consent-funnel events** in Umami: `consent_shown` and `consent_choice`
+  (`granted` / `denied`, plus whether it was reopened from the footer).
+  Ignored = shown − choices.
+- **`/privacy` page**: what Umami and GA collect, GA's 14-month retention, the
+  stored `invst-consent` choice, other services (GitHub Pages, Google Fonts) and
+  UK GDPR rights. It's linked from the banner and footer and listed in the
+  sitemap, and offers an inline "Change privacy settings" button.
+
+### Changed
+- Banner copy now says visits are counted anonymously without cookies, that GA
+  only runs on Accept, and links to the privacy policy.
+- Cache-bust bumped (`style.css?v=27`, `common.js?v=28`).
+
+### Fixed
+- `sitemap.xml` had stray text after `</urlset>`, which made it invalid XML.
+
 ## [2.5.0] — 2026-11-01 — Design pass & mobile
 
 ### Changed

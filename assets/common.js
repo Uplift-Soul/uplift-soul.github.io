@@ -31,16 +31,41 @@
   document.head.appendChild(s);
 })();
 
-/* GA4 click events — which hub cards / nav links pull people in. Event delegation so it
-   covers every page (and any future page) automatically; gtag's default beacon transport
-   sends the hit reliably even as the click navigates away. */
+/* Umami — cookieless visit counting. It stores nothing on the device (a visitor is
+   an anonymous hash that rotates daily), so it needs no consent and runs for
+   everyone: the true traffic totals, where GA only sees visitors who accepted.
+   Events fired before the script arrives are queued and sent once it loads.
+   data-domains keeps local test servers out of the stats. */
+(function(){
+  var q = [];
+  var ready = () => window.umami && typeof window.umami.track === "function";
+  window.umamiTrack = function(name, data){
+    if (ready()) window.umami.track(name, data);
+    else if (q) q.push([name, data]);
+  };
+  var s = document.createElement("script");
+  s.defer = true;
+  s.src = "https://cloud.umami.is/script.js";
+  s.setAttribute("data-website-id", "e4b37561-6914-4bd8-b0bd-2af68ec275f1");
+  s.setAttribute("data-domains", "invstgaming.co.uk");
+  s.onload = function(){
+    var pending = q; q = null;
+    if (ready()) pending.forEach(a => window.umami.track(a[0], a[1]));
+  };
+  s.onerror = function(){ q = null; };
+  document.head.appendChild(s);
+})();
+
+/* Click events — which hub cards / nav links pull people in. Event delegation so it
+   covers every page (and any future page) automatically; gtag's beacon transport and
+   Umami's keepalive fetch both send the hit reliably as the click navigates away. */
 (function(){
   var pid = p => (p.split("#")[0].split("?")[0].replace(/^.*\//,"").replace(/\.html$/,"") || "index");
   document.addEventListener("click", function(e){
-    if(typeof window.gtag !== "function" || !e.target.closest) return;
+    if(!e.target.closest) return;
     var card = e.target.closest(".hubcard");
     if(card){
-      gtag("event", "hub_card_click", {
+      track("hub_card_click", {
         destination: pid(card.getAttribute("href") || ""),
         link_text: ((card.querySelector(".hubname") || {}).textContent || "").trim()
       });
@@ -48,7 +73,7 @@
     }
     var nav = e.target.closest("nav.nav a");
     if(nav){
-      gtag("event", "nav_click", {
+      track("nav_click", {
         destination: pid(nav.getAttribute("href") || ""),
         link_text: (nav.textContent || "").trim(),
         from_page: pid(location.pathname)
@@ -57,10 +82,12 @@
   }, true);
 })();
 
-/* small gtag wrapper — safe no-op if GA didn't load (adblockers, offline). Used
-   for the interaction events fired from the chart controls, palette, etc. */
+/* event wrapper — sends to GA (consenters only; safe no-op if gtag didn't load) and
+   to Umami (everyone). Used for the interaction events fired from the chart
+   controls, palette, etc. */
 function track(name, params){
   if (typeof window.gtag === "function") gtag("event", name, params || {});
+  window.umamiTrack(name, params);
 }
 
 /* Ledger categorical palette — validated colorblind-safe (dataviz skill:
@@ -603,7 +630,9 @@ function flash(el){
    future visits); Decline leaves it denied. Either way the choice is persisted, so
    the banner doesn't reappear on its own. A "Privacy settings" link in every footer
    reopens it, so consent can be withdrawn as easily as it was given (UK GDPR) —
-   declining after accepting flips consent back to denied and clears GA's cookies. */
+   declining after accepting flips consent back to denied and clears GA's cookies.
+   Umami (cookieless, so it sees everyone) counts the banner being shown and each
+   choice; "ignored" = shown − choices, i.e. how much of the audience GA misses. */
 (() => {
   /* remove GA's first-party cookies (_ga, _ga_<id>) on this host and its parent domain */
   const clearGaCookies = () => {
@@ -621,7 +650,7 @@ function flash(el){
     bar.setAttribute("role", "dialog");
     bar.setAttribute("aria-label", "Privacy choice");
     bar.innerHTML =
-      '<p class="consent-msg">This site uses <b>Google Analytics</b> to see how it’s used — no ads, nothing sold on. Analytics cookies stay off until you accept, and you can change your mind any time via <b>Privacy settings</b> in the footer.</p>' +
+      '<p class="consent-msg">Visits are counted anonymously, with no cookies. <b>Google Analytics</b> only runs if you accept — no ads, nothing sold on. Change your mind any time via <b>Privacy settings</b> in the footer. <a href="/privacy">Privacy policy</a></p>' +
       '<div class="consent-acts">' +
         '<button class="consent-btn" type="button" data-consent="denied">Decline</button>' +
         '<button class="consent-btn ok" type="button" data-consent="granted">Accept</button>' +
@@ -632,11 +661,13 @@ function flash(el){
       if (v === "denied") clearGaCookies();
       try { localStorage.setItem("invst-consent", v); } catch(e){}
       window.__consent = v;
+      window.umamiTrack("consent_choice", { choice: v, reopened: fromLink === true });
       bar.remove();
     };
     bar.querySelectorAll("[data-consent]").forEach(b =>
       b.addEventListener("click", () => choose(b.getAttribute("data-consent"))));
     document.body.appendChild(bar);
+    if (fromLink !== true) window.umamiTrack("consent_shown");
     /* reopened from the footer: move focus to the current choice */
     if (fromLink === true) {
       const cur = bar.querySelector('[data-consent="' + window.__consent + '"]');
@@ -644,15 +675,19 @@ function flash(el){
     }
   };
 
-  /* footer link that reopens the banner */
+  /* footer links: the privacy policy, and a button that reopens the banner */
   const addLink = () => {
     const f = document.querySelector("footer");
     if (!f || f.querySelector(".privacy-link")) return;
+    const a = document.createElement("a");
+    a.href = "/privacy"; a.textContent = "Privacy policy";
     const b = document.createElement("button");
     b.type = "button"; b.className = "privacy-link"; b.textContent = "Privacy settings";
     b.addEventListener("click", () => build(true));
-    f.append(" · ", b);
+    f.append(" · ", a, " · ", b);
   };
+  /* lets the privacy page offer the same "change your choice" control inline */
+  window.openPrivacySettings = () => build(true);
 
   const init = () => {
     addLink();
