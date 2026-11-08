@@ -3,21 +3,64 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="INVST Gaming — live Twitch snapshot: top categories right now, with the streamers behind them and fragility rankings.">
+<meta name="description" content="The top 20 Twitch categories right now by live viewers, the top 10 streamers behind each, and which categories depend most on a few big streamers.">
 <meta name="theme-color" content="#0e110f">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="INVST Gaming">
-<meta property="og:title" content="INVST Gaming — Live">
-<meta property="og:description" content="Live Twitch snapshot: top categories right now, with the streamers behind them and fragility rankings.">
+<meta property="og:title" content="Top Twitch Categories Right Now — Live Viewers">
+<meta property="og:description" content="The top 20 Twitch categories right now by live viewers, the top 10 streamers behind each, and which categories depend most on a few big streamers.">
 <meta property="og:url" content="https://invstgaming.co.uk/live">
 <meta property="og:image" content="https://invstgaming.co.uk/assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<title>INVST Gaming — Live</title>
+<title>Top Twitch Categories Right Now — Live Viewers | INVST Gaming</title>
+<link rel="canonical" href="https://invstgaming.co.uk/live">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=26">
+<link rel="stylesheet" href="assets/style.css?v=27">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "Dataset",
+ "name": "Top Twitch categories by live viewers",
+ "description": "The top 20 Twitch categories by concurrent viewers in the latest snapshot, with the top 10 streamers in each and the share of each category's audience they hold.",
+ "url": "https://invstgaming.co.uk/live",
+ "creator": {
+  "@type": "Organization",
+  "name": "INVST Gaming",
+  "url": "https://invstgaming.co.uk/"
+ },
+ "publisher": {
+  "@type": "Organization",
+  "name": "INVST Gaming",
+  "url": "https://invstgaming.co.uk/"
+ },
+ "isAccessibleForFree": true,
+ "isPartOf": {
+  "@id": "https://invstgaming.co.uk/#website"
+ },
+ "temporalCoverage": "2026-06-05/..",
+ "variableMeasured": [
+  "Concurrent viewers",
+  "Top-10 streamer share of viewers"
+ ],
+ "measurementTechnique": "Snapshots of the Twitch Helix API (top 50 categories and their streams) every 3 hours",
+ "keywords": [
+  "Twitch",
+  "Twitch categories",
+  "live viewers",
+  "streaming analytics"
+ ],
+ "distribution": [
+  {
+   "@type": "DataDownload",
+   "encodingFormat": "application/json",
+   "contentUrl": "https://invstgaming.co.uk/live.json"
+  }
+ ]
+}
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -63,7 +106,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=27"></script>
+<script src="assets/common.js?v=28"></script>
 <script>
 /* lede: the page's headline figures — total audience now (with movement vs the
    previous snapshot) and the category leaning hardest on its top 10 */
