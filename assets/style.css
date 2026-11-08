@@ -427,6 +427,17 @@ footer .privacy-link{font:inherit;letter-spacing:inherit;color:var(--muted);back
   border-bottom:1px solid transparent;padding:0;cursor:pointer;transition:color .2s,border-color .2s}
 footer .privacy-link:hover{color:var(--text);border-bottom-color:var(--muted)}
 .loading,.error{font-family:var(--font-mono);color:var(--muted);font-size:13px;padding:14px 0}
+
+/* ---- long-form text (privacy page) ---- */
+.prose{max-width:68ch;font-size:14px;line-height:1.7;color:var(--muted);padding-bottom:8px}
+.prose p,.prose ul{margin:0 0 12px}
+.prose ul{padding-left:20px}
+.prose li{margin-bottom:4px}
+.prose b{color:var(--text);font-weight:600}
+.prose code{font-family:var(--font-mono);font-size:12.5px;color:var(--text)}
+.prose a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(45,212,160,.4)}
+.prose a:hover{border-bottom-color:var(--accent)}
+.prose .consent-btn{margin-top:4px}
 .loading{animation:fadepulse 1.6s ease infinite}
 .error{color:var(--coral)}
 
@@ -591,6 +602,8 @@ html.nav-collapsed .navmini{opacity:1;transform:none;pointer-events:auto}
 }
 .consent-msg{flex:1 1 280px;font-size:12.5px;line-height:1.5;color:var(--muted)}
 .consent-msg b{color:var(--text);font-weight:600}
+.consent-msg a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(45,212,160,.4);white-space:nowrap}
+.consent-msg a:hover{border-bottom-color:var(--accent)}
 .consent-acts{display:flex;gap:8px;flex:none}
 .consent-btn{
   font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;
