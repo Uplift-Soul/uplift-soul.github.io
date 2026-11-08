@@ -20,6 +20,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are
 
 ---
 
+## [2.6.1] — 2026-11-08 — SEO basics
+
+### Changed
+- **Keyword-first page titles** (e.g. "Top Twitch Categories Right Now — Live
+  Viewers | INVST Gaming") and rewritten meta / og descriptions. The Trending
+  description no longer mentions the removed "fastest-growing categories" panel.
+
+### Added
+- `<link rel="canonical">` on every page, pointing at the clean URL, so `/live`
+  and `/live.html` aren't treated as duplicates.
+- JSON-LD structured data: `WebSite` + `Organization` on the Overview, `Dataset`
+  on Live, Trending, Publishers and Historical (each linking its JSON slice as a
+  download), for Google Dataset Search.
+
 ## [2.6.0] — 2026-11-08 — Cookieless analytics & privacy page
 
 ### Added
