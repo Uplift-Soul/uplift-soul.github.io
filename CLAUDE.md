@@ -58,8 +58,12 @@ Twitch Helix API + IGDB ──(cron ~3h, on a Raspberry Pi)──► PostgreSQL 
 - `loadData(slice)` fetches a page's JSON slice and falls back to `data.json` if absent.
 - Analytics: GA4 (`gtag.js`) is installed once in `common.js` behind Consent Mode v2
   (denied by default); custom events `hub_card_click` / `nav_click` plus interaction events
-  via `track()`. A "Privacy settings" footer link (injected by `common.js`) reopens the
-  consent banner so consent can be withdrawn.
+  via `track()`. **Umami** (cookieless, no consent needed) also loads from `common.js` and
+  counts everyone; `track()` sends to both, and Umami alone gets `consent_shown` /
+  `consent_choice` (ignored = shown − choices). Footer links (injected by `common.js`):
+  "Privacy policy" (`/privacy`) and "Privacy settings", which reopens the banner.
+  `/privacy` is not a nav page (not in `PAGES`), but is in `sitemap.xml`; keep it accurate
+  when analytics change (GA retention: 14 months).
 - Releases: record changes in `CHANGELOG.md` and tag them `vMAJOR.MINOR.PATCH`.
 
 ## Deploy
