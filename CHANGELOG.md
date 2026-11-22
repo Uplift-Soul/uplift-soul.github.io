@@ -20,6 +20,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are
 
 ---
 
+## [2.6.2] — 2026-11-22 — Deploy fix
+
+### Fixed
+- Roughly half of the Pages deploys since 21 Nov failed with "No artifacts named
+  github-pages were found". The deploy workflow now uses the current GitHub
+  actions (`checkout@v7`, `configure-pages@v6`, `upload-pages-artifact@v5`,
+  `deploy-pages@v5`), which also clears the Node.js 20 deprecation warning.
+  Hidden files such as `.gitignore` are no longer included in the published site.
+
 ## [2.6.1] — 2026-11-08 — SEO basics
 
 ### Changed
