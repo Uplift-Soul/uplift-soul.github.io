@@ -20,6 +20,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are
 
 ---
 
+## [2.6.3] — 2026-11-22 — Publish only the site
+
+### Changed
+- The Pages deploy now publishes only the site files (pages, `assets/`, data JSON,
+  `CNAME`, `robots.txt`, `sitemap.xml`). Repo docs such as the README, CHANGELOG
+  and LICENSE stay on GitHub and are no longer served on invstgaming.co.uk.
+- Internal working notes moved out of the public repo.
+- Cache-bust bumped (`common.js?v=29`).
+
 ## [2.6.2] — 2026-11-22 — Deploy fix
 
 ### Fixed
@@ -170,7 +179,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are
 ## [2.0.0] — 2026-07-18 — "Ledger" editorial redesign
 
 A ground-up visual overhaul: from the dark-aurora "instrument" look to an
-editorial, data-journalism identity — the design system built in the design tool,
+editorial, data-journalism identity — the design system built as a separate brand project,
 ported into the live site.
 
 ### Changed
@@ -193,7 +202,7 @@ ported into the live site.
 ### Notes
 - No build step, no dependency changes — plain HTML/CSS/JS + Chart.js as before.
 - The design-system source and preview mockups live in `design-system/` and
-  `brand-concepts/` (gitignored; synced to the "INVST Gaming" the design tool project).
+  `brand-concepts/` (gitignored; kept outside the public repo).
 
 ## [1.0.0] — original build — "Signal"
 

@@ -9,8 +9,8 @@ __pycache__/
 .venv/
 venv/
 
-# Brand design-system package + concept mockups — a design deliverable synced to
-# the design tool, not part of the public GitHub Pages site.
+# Brand design-system package + concept mockups — a design deliverable kept
+# separately, not part of the public GitHub Pages site.
 design-system/
 brand-concepts/
 
