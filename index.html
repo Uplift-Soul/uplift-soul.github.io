@@ -19,9 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=27">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" integrity="sha384-cVMg8E3QFwTvGCDuK+ET4PD341jF3W8nO1auiXfuZNQkzbUUiBGLsIQUE+b1mxws" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="assets/style.css?v=28">
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -51,17 +49,17 @@
 <body>
 <div class="wrap">
   <nav class="nav">
-    <a href="/" class="active">Overview</a>
+    <a href="/" class="active">Today</a>
     <a href="/live">Live</a>
     <a href="/trending">Trending</a>
     <a href="/publishers">Publishers</a>
-    <a href="/historical">Historical</a>
+    <a href="/historical">Trends</a>
   </nav>
 
   <header>
     <div class="brand">
-      <div class="kicker">Overview · category intelligence</div>
-      <h1>IN<svg class="vmark" viewBox="0 0 38 42" overflow="visible" aria-hidden="true"><polyline points="5,8 16,36 33,3" stroke-width="9"/></svg>ST <span>Overview</span></h1>
+      <div class="kicker" id="kicker">Today · Twitch category intelligence</div>
+      <h1>IN<svg class="vmark" viewBox="0 0 38 42" overflow="visible" aria-hidden="true"><polyline points="5,8 16,36 33,3" stroke-width="9"/></svg>ST <span>Today</span></h1>
       <div class="wordsub">Gaming</div>
     </div>
     <div class="hmeta">
@@ -70,255 +68,170 @@
     </div>
   </header>
 
-  <section class="hub">
-    <p class="bio">Twitch category intelligence — what's being watched right now, which new games are breaking out, and which publishers own the attention. Live from the Twitch API, refreshed every few hours.</p>
-    <div class="hubgrid">
-      <a class="hubcard" href="/live">
-        <div class="hubtop"><span class="hubname">Live</span><span class="hubgo" aria-hidden="true">→</span></div>
-        <div class="hubdesc">Top categories right now, the streamers behind them, and which lean hardest on a few big names.</div>
-        <div class="hubstat" id="t-live"></div>
-      </a>
-      <a class="hubcard" href="/trending">
-        <div class="hubtop"><span class="hubname">Trending</span><span class="hubgo" aria-hidden="true">→</span></div>
-        <div class="hubdesc">Newly released games breaking into the top 50, drafted and tracked week by week.</div>
-        <div class="hubstat" id="t-trending"></div>
-      </a>
-      <a class="hubcard" href="/publishers">
-        <div class="hubtop"><span class="hubname">Publishers</span><span class="hubgo" aria-hidden="true">→</span></div>
-        <div class="hubdesc">Which publishers and franchises own the most Twitch attention, and who's moving.</div>
-        <div class="hubstat" id="t-pub"></div>
-      </a>
-      <a class="hubcard" href="/historical">
-        <div class="hubtop"><span class="hubname">Historical</span><span class="hubgo" aria-hidden="true">→</span></div>
-        <div class="hubdesc">How category rankings shift month to month, and the biggest risers and fallers.</div>
-        <div class="hubstat" id="t-hist"></div>
-      </a>
+  <section class="today">
+    <p class="headline skel js-err" id="headline" aria-live="polite"></p>
+    <button type="button" class="hlmore" id="hlmore" aria-controls="headline" aria-expanded="false" hidden>More ↓</button>
+    <p class="standfirst" id="standfirst"></p>
+    <div class="hubgrid stories" id="stories">
+      <div class="hubcard skel" aria-hidden="true"></div><div class="hubcard skel" aria-hidden="true"></div>
+      <div class="hubcard skel" aria-hidden="true"></div><div class="hubcard skel" aria-hidden="true"></div>
     </div>
   </section>
 
-  <div class="glance">At a glance</div>
-
-  <div class="kpis js-err" id="kpis">
-    <div class="kpi lead skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
-  </div>
-
-  <section class="panel trend">
-    <h2>Viewership Trend</h2>
-    <div class="cap">Peak concurrent viewers per category, smoothed to a 7-day rolling average. Opens on the live feed; Archive and All add the 2024–25 data (the break in the lines is the gap before live collection began).</div>
-    <div class="chartbox"><canvas id="trend"></canvas></div>
-  </section>
-
-  <section class="panel conc alt">
-    <h2>Concentration Over Time</h2>
-    <div class="cap">Share of each category's viewers held by its top 10 streamers, by month — higher means more top-heavy. Opens on the live feed; Archive and All add the 2024–25 data.</div>
-    <div class="chartbox"><canvas id="conc"></canvas></div>
+  <section class="panel">
+    <h2>Top 5 Right Now</h2>
+    <div class="cap">Current concurrent viewers in Twitch's five biggest categories, and the change since this time yesterday. Tap a category to see the streamers behind it.</div>
+    <div id="top5" class="js-err"><div class="skelrows" aria-hidden="true">
+      <div class="skelrow"></div><div class="skelrow"></div><div class="skelrow"></div>
+    </div></div>
+    <a class="morelink" href="/live">All 20 categories on Live →</a>
   </section>
 
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=29"></script>
+<script src="assets/common.js?v=30"></script>
 <script>
-function renderKpis(data){
-  const cur=data.current||[];
-  const totalNow=cur.reduce((s,c)=>s+(c.viewership||0),0);
-  const top=cur[0];
-  const days=new Set((data.trend||[]).map(t=>t.day)).size;
+/* "Today": the home page reads the latest snapshot plus the Trending, Publishers and
+   Trends slices, and writes the day's story — a headline, then one card per page,
+   each picking the most newsworthy item there and linking to where it continues. */
+const pctOf = (now, before) => (before==null || !before || !isFinite(before)) ? null : (now-before)/before*100;
+const ago = label => (label || "").replace(/^vs /, "");
+const fmtDay = iso => new Date(iso).toLocaleDateString("en-GB", {weekday:"long", day:"numeric", month:"long", timeZone:"Europe/London"});
 
-  /* deltas vs this time yesterday (or the previous snapshot — see deltaBase) */
-  const prev=deltaBase(data);
-  const pct=(now,before)=> (before==null||before===0||!isFinite(before)) ? null : (now-before)/before*100;
-  const totalDelta = prev ? pct(totalNow, prev.total) : null;
-  const topDelta = (prev && top) ? pct(top.viewership, (prev.by_category||{})[top.category]) : null;
-  const vsLabel = prev ? prev.label : undefined;
+/* best-effort side slices: a failed fetch just drops that story, never the page */
+const side = f => loadData(f).catch(() => ({}));
 
-  /* Only figures that are actually news belong here: a lede and its support,
-     both of which move and carry a delta. Category count and history depth are
-     provenance about the dataset, not findings, so they sit in the dateline. */
-  const cards=[
-    {label:"Tracked Viewers (now)", val:fmt(totalNow), n:totalNow, f:fmt,
-     sub:"across the top "+cur.length+" categories", delta:totalDelta, lead:true},
-    {label:"Top Category", val:top?top.category:"—",
-     sub:top?fullNum(top.viewership)+" viewers":"", sm:true, delta:topDelta},
-  ];
-  document.getElementById("kpis").innerHTML = cards.map(c=>`
-    <div class="kpi${c.lead?' lead':''}">
-      <div class="label">${c.label}</div>
-      <div class="valrow"><div class="val ${c.sm?'sm':''}">${esc(c.val)}</div>${deltaHtml(c.delta, vsLabel)}</div>
-      <div class="sub">${c.sub||""}</div>
-    </div>`).join("");
-  countUpKpis(cards);
+function buildToday(ov, tr, pb, hs){
+  const cur = ov.current || [];
+  const base = deltaBase(ov);
+  const prev = (base && base.by_category) || {};
+  const top = cur[0];
+  const cohort = ((tr.breakout || {}).cohort || []).filter(m => m.trend !== "dropped" && m.latest);
+  const pubs = (pb.publishers || {}).publishers || {};
+  const lead = (pubs.standings || [])[0];
+  const total = cur.reduce((s,c) => s + (c.viewership||0), 0);
 
-  const dl=document.getElementById("dateline");
-  if(dl) dl.textContent = "Top "+cur.length+" categories · "+days+" days of data";
+  /* --- headline: who leads, who owns the attention, what's new --- */
+  const s = [];
+  if(top){
+    const d = pctOf(top.viewership, prev[top.category]);
+    const isNew = cohort.some(m => m.category === top.category);
+    s.push(`${isNew ? "New release " : ""}<b>${esc(top.category)}</b> leads Twitch with ${fmt(top.viewership)} viewers` +
+      (d!=null && Math.abs(d) >= 1 ? `, ${d>0?"up":"down"} ${Math.abs(d).toFixed(0)}% on ${esc(ago(base.label))}.` : "."));
+  }
+  if(lead && lead.share >= 10)
+    s.push(`<b>${esc(lead.name)}</b> now holds ${lead.share.toFixed(0)}% of all tracked attention.`);
+  const fresh = cohort.filter(m => !top || m.category !== top.category).sort((a,b) => b.latest - a.latest)[0];
+  if(fresh)
+    s.push(`Among new releases, <b>${esc(fresh.category)}</b> is next strongest at ${fmt(fresh.latest)}.`);
+  /* first sentence always shows; on phones the rest sits behind "More ↓" */
+  const h = document.getElementById("headline"), more = document.getElementById("hlmore");
+  h.classList.remove("skel");
+  h.innerHTML = (s[0] || "") + (s.length > 1 ? ` <span class="hlrest">${s.slice(1).join(" ")}</span>` : "");
+  more.hidden = s.length < 2;
+
+  document.getElementById("standfirst").innerHTML =
+    `<b>${fmt(total)}</b> people are watching Twitch's top ${cur.length} categories right now. ` +
+    `Below are today's biggest stories from each part of the site.`;
+  const iso = ov.latest_snapshot || ov.generated_at;
+  if(iso) document.getElementById("kicker").textContent = "Today · " + fmtDay(iso);
+  const days = new Set((ov.trend || []).map(t => t.day)).size;
+  document.getElementById("dateline").textContent = `Top ${cur.length} categories · ${days} days of data`;
+
+  /* --- story cards: one per page --- */
+  const cards = [];
+  /* Live: the biggest move vs yesterday among sizeable categories (≥20K now) */
+  const moves = cur.filter(c => c.viewership >= 2e4)
+    .map(c => ({c, d: pctOf(c.viewership, prev[c.category])}))
+    .filter(x => x.d != null && (!top || x.c.category !== top.category))
+    .sort((a,b) => Math.abs(b.d) - Math.abs(a.d));
+  if(moves[0]){
+    const {c, d} = moves[0];
+    cards.push({href:"/live#"+encodeURIComponent(c.category), kick:"Biggest move today", kickS:"Biggest move", title:c.category,
+      fig:`${d>0?"▲":"▼"} ${Math.abs(d).toFixed(0)}%`, figS:`${d>0?"▲":"▼"} ${Math.abs(d).toFixed(0)}% today`, dir:d>0?"up":"down",
+      detail:`${fmt(c.viewership)} viewers, compared with ${ago(base.label)}`, go:"Live"});
+  }
+  /* Trending: the strongest of this week's new draftees, else the strongest overall */
+  const wk = Math.max(0, ...cohort.map(m => m.entry_week || 0));
+  const newest = cohort.filter(m => m.entry_week === wk).sort((a,b) => b.latest - a.latest)[0] || fresh;
+  if(newest)
+    cards.push({href:"/trending", kick:"Just broke into the top 50", kickS:"New in top 50", title:newest.category,
+      fig:fmt(newest.latest)+" viewers", dir:"up", detail:"a new release, now tracked week by week", go:"Trending"});
+  /* Publishers: the largest swing that isn't the attention leader */
+  const movers = [].concat(pubs.gainers || [], pubs.fallers || [])
+    .filter(m => !lead || m.name !== lead.name).sort((a,b) => Math.abs(b.change) - Math.abs(a.change));
+  if(movers[0]){
+    const m = movers[0];
+    cards.push({href:"/publishers", kick:"Publisher swing this week", kickS:"Publisher swing", title:m.name,
+      fig:`${m.change>0?"+":"−"}${fmt(Math.abs(m.change))} viewers`, figS:`${m.change>0?"+":"−"}${fmt(Math.abs(m.change))} this week`, dir:m.change>0?"up":"down",
+      detail:`${m.change>0?"up":"down"} ${Math.abs(m.pct).toFixed(0)}% on the week before`, go:"Publishers"});
+  }
+  /* Trends: the biggest riser on two years ago, among categories of real size */
+  const mv = hs.movers || {};
+  const riser = (mv.gainers || []).filter(m => m.change >= 5e4).sort((a,b) => b.change - a.change)[0] || (mv.gainers || [])[0];
+  if(riser){
+    const w = mv.window || {};
+    cards.push({href:"/historical", kick:`Two years on${w.then_year ? " · vs "+w.then_year : ""}`, kickS:"Two years on", title:riser.category,
+      fig:`+${fmt(riser.change)} peak viewers`, figS:`+${Math.round(riser.pct)}% vs ${w.then_year || "2 yrs ago"}`, dir:"up",
+      detail:`up ${Math.round(riser.pct)}% on the same dates in ${w.then_year || "two years ago"}`, go:"Trends"});
+  }
+  document.getElementById("stories").innerHTML = cards.map(c => `
+    <a class="hubcard story" href="${c.href}" data-go="${esc(c.go)}">
+      <span class="skick"><span class="lg">${esc(c.kick)}</span><span class="sm">${esc(c.kickS || c.kick)}</span></span>
+      <span class="stitle">${esc(c.title)}</span>
+      <span class="sfig ${c.dir}"><span class="lg">${esc(c.fig)}</span><span class="sm">${esc(c.figS || c.fig)}</span></span>
+      <span class="hubdesc">${esc(c.detail)}</span>
+      <span class="sgo">${esc(c.go)} →</span>
+    </a>`).join("");
+
+  renderTop5(cur, prev);
 }
 
-/* the delta badge (deltaHtml) is shared from common.js */
-
-/* visual only: tick numeric KPI values up from zero (skipped for reduced motion) */
-function countUpKpis(cards){
-  if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const els=document.querySelectorAll("#kpis .val");
-  cards.forEach((c,i)=>{
-    if(c.n==null || !els[i]) return;
-    const el=els[i], t0=performance.now(), dur=900;
-    const step=now=>{
-      const p=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-p,3);
-      el.textContent=c.f(Math.round(c.n*e));
-      if(p<1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  });
+function renderTop5(cur, prev){
+  const five = cur.slice(0,5), el = document.getElementById("top5");
+  if(!five.length){ el.innerHTML = '<div class="error">No current data yet.</div>'; return; }
+  const max = five[0].viewership || 1;
+  el.innerHTML = '<div class="rows">' + five.map((c,i) => {
+    const d = pctOf(c.viewership, prev[c.category]);
+    const mv = (d==null || Math.abs(d) < .05) ? "" :
+      `<span class="vmove ${d>0?'up':'down'}">${d>0?'▲':'▼'} ${Math.abs(d).toFixed(1)}%</span>`;
+    return `<a class="row xrow" href="/live#${encodeURIComponent(c.category)}" style="--i:${i};text-decoration:none;color:inherit">
+      <div class="rank">${String(c.rank).padStart(2,'0')}</div>
+      <div class="barwrap">
+        <div class="barname"><span class="cat">${esc(c.category)}</span></div>
+        <div class="track"><div class="fill" data-w="${(c.viewership/max*100).toFixed(1)}"></div></div>
+      </div>
+      <div class="views"><span class="vval">${fmt(c.viewership)}</span>${mv}</div>
+    </a>`;
+  }).join("") + '</div>';
+  requestAnimationFrame(() => el.querySelectorAll(".fill").forEach(f => f.style.width = f.dataset.w + "%"));
 }
 
-function renderTrend(data){
-  const trend=data.trend||[];
-  const cats=[...new Set(trend.map(t=>t.category))];
-  const W=7; // trailing window: smooths daily jitter into a readable trend line
-  const datasets=cats.map((cat,i)=>{
-    const raw=trend.filter(t=>t.category===cat).map(t=>({x:t.day,y:t.viewership}))
-      .sort((a,b)=>a.x<b.x?-1:a.x>b.x?1:0);
-    /* smooth within each collection era (7-day rolling average) and break the
-       line across gaps (>45 days), so the curve reads as a trend instead of a
-       seismograph and never interpolates across the archive→live gap */
-    const data=[];
-    let seg=[];
-    const emit=()=>{
-      for(let k=0;k<seg.length;k++){
-        let s=0,n=0;
-        for(let m=Math.max(0,k-W+1);m<=k;m++){ s+=seg[m].y; n++; }
-        data.push({x:seg[k].x, y:Math.round(s/n)});
-      }
-    };
-    for(const p of raw){
-      if(seg.length && (new Date(p.x)-new Date(seg[seg.length-1].x) > 45*864e5)){
-        emit(); data.push({x:p.x, y:null}); seg=[];
-      }
-      seg.push(p);
-    }
-    emit();
-    return {
-      label:cat,
-      data,
-      borderColor:PALETTE[i%PALETTE.length],
-      backgroundColor:PALETTE[i%PALETTE.length],
-      borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:.35,
-      spanGaps:false,
-    };
-  });
-  const cv=document.getElementById("trend");
-  cv.setAttribute("role","img");
-  cv.setAttribute("aria-label","Line chart: daily Twitch viewership for the top "+cats.length+" categories.");
-  new Chart(cv,{
-    type:"line",
-    data:{datasets},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      interaction:{mode:"nearest",intersect:false},
-      plugins:{
-        legend:{labels:{color:CHART_THEME.legend,font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
-        tooltip:{backgroundColor:CHART_THEME.tipBg,borderColor:CHART_THEME.tipBorder,borderWidth:1,cornerRadius:10,padding:10,
-          titleFont:{family:"IBM Plex Mono"},bodyFont:{family:"IBM Plex Mono"},
-          callbacks:{label:c=>` ${c.dataset.label}: ${fullNum(c.parsed.y)}`}}
-      },
-      scales:{
-        x:{type:"time",
-           /* no fixed unit: let Chart.js pick days when zoomed to Live and
-              months when showing All/Archive, so the x-axis always has ticks
-              (a forced month unit left the short Live range with none) */
-           time:{minUnit:"day"},
-           grid:{color:CHART_THEME.grid},
-           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8}},
-        y:{grid:{color:CHART_THEME.grid},
-           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},callback:v=>fmt(v)}}
-      }
-    }
-  });
+/* phones: "More ↓" reveals the rest of the headline (the choice survives auto-refresh) */
+document.getElementById("hlmore").addEventListener("click", e => {
+  const h = document.getElementById("headline"), open = !h.classList.contains("open");
+  h.classList.toggle("open", open);
+  e.currentTarget.textContent = open ? "Less ↑" : "More ↓";
+  e.currentTarget.setAttribute("aria-expanded", String(open));
+  if(open) track("headline_more");
+});
+
+/* which story sent people where (hub_card_click in common.js covers the card itself) */
+document.addEventListener("click", e => {
+  const a = e.target.closest && e.target.closest(".story");
+  if(a) track("today_story_click", { destination: a.dataset.go, story: (a.querySelector(".skick")||{}).textContent || "" });
+});
+
+function renderToday(ov){
+  return Promise.all([side("trending.json"), side("publishers.json"), side("history.json")])
+    .then(([tr, pb, hs]) => buildToday(ov, tr, pb, hs));
 }
 
-function renderConcentration(data){
-  const cc = data.concentration || {months:[], series:[]};
-  if(!cc.series || !cc.series.length) return;
-  const labels = cc.months.map(m=>{
-    const d=new Date(m);
-    return d.toLocaleDateString("en-GB",{month:"short",year:"2-digit",timeZone:"UTC"});
-  });
-  const datasets = cc.series.map((s,i)=>({
-    label:s.category,
-    data:s.pct,
-    borderColor:PALETTE[i%PALETTE.length],
-    backgroundColor:PALETTE[i%PALETTE.length],
-    borderWidth:1.8,pointRadius:2.5,pointHoverRadius:5,tension:.25,
-    spanGaps:false,
-  }));
-  const cv=document.getElementById("conc");
-  cv.setAttribute("role","img");
-  cv.setAttribute("aria-label","Line chart: monthly share of each category's viewers held by its top 10 streamers.");
-  new Chart(cv,{
-    type:"line",
-    data:{labels,datasets},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      interaction:{mode:"nearest",intersect:false},
-      plugins:{
-        legend:{labels:{color:CHART_THEME.legend,font:{family:"Inter",size:11},boxWidth:10,boxHeight:10,usePointStyle:true,padding:14}},
-        tooltip:{backgroundColor:CHART_THEME.tipBg,borderColor:CHART_THEME.tipBorder,borderWidth:1,cornerRadius:10,padding:10,
-          titleFont:{family:"IBM Plex Mono"},bodyFont:{family:"IBM Plex Mono"},
-          callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y!=null?c.parsed.y.toFixed(1)+'%':'—'}`}}
-      },
-      scales:{
-        x:{grid:{color:CHART_THEME.grid},
-           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},maxRotation:0,autoSkip:true,maxTicksLimit:12}},
-        y:{min:0,max:100,
-           grid:{color:CHART_THEME.grid},
-           ticks:{color:CHART_THEME.tick,font:{family:"IBM Plex Mono",size:10},callback:v=>v+"%"}}
-      }
-    }
-  });
-}
-
-function refreshOverview(data){
-  renderKpis(data);
-  /* rebuild charts in place; clear the injected range/chip controls first so the
-     controls plugin doesn't append a duplicate set */
-  document.querySelectorAll(".chartctl").forEach(e=>e.remove());
-  const t=Chart.getChart("trend"); if(t) t.destroy();
-  const c=Chart.getChart("conc");  if(c) c.destroy();
-  renderTrend(data);
-  renderConcentration(data);
-}
-
-/* hub cards: fill each with a live teaser stat (best-effort — a failed fetch just
-   leaves the card's description, never blocks the page) */
-function setTeaser(id, label, value){
-  const el = document.getElementById(id);
-  if(el) el.innerHTML = `<span class="tlabel">${esc(label)}</span><span class="tval">${esc(value)}</span>`;
-}
-function loadTeasers(overview){
-  const top = (overview.current || [])[0];
-  if(top) setTeaser("t-live", "Now leading", `${top.category} · ${fmt(top.viewership)}`);
-  loadData("trending.json").then(d=>{
-    const c = ((d.breakout || {}).cohort) || [];
-    const best = c.filter(m=>m.latest && m.trend!=="dropped").sort((a,b)=>b.latest-a.latest)[0];
-    if(best) setTeaser("t-trending", "Breaking out", `${best.category} · ${fmt(best.latest)}`);
-  }).catch(()=>{});
-  loadData("publishers.json").then(d=>{
-    const s = (((d.publishers || {}).publishers) || {}).standings || [];
-    if(s[0]) setTeaser("t-pub", "Leading", `${s[0].name} · ${s[0].share.toFixed(1)}%`);
-  }).catch(()=>{});
-  loadData("history.json").then(d=>{
-    const g = ((d.movers || {}).gainers) || [];
-    if(g[0]) setTeaser("t-hist", "Top riser", `${g[0].category} · +${g[0].pct}%`);
-  }).catch(()=>{});
-}
-
-loadData("overview.json").then(data=>{
-  setUpdated(data);
-  renderKpis(data);
-  renderTrend(data);
-  renderConcentration(data);
-  loadTeasers(data);
-  if(window.startAutoRefresh) startAutoRefresh("overview.json", data, refreshOverview);
+loadData("overview.json").then(ov => {
+  setUpdated(ov);
+  renderToday(ov);
+  if(window.startAutoRefresh) startAutoRefresh("overview.json", ov, renderToday);
 }).catch(showError);
 </script>
 </body>

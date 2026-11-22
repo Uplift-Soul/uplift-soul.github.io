@@ -435,11 +435,11 @@ function flash(el){
   /* ---- palette ---- */
   let root, input, list, items = [], active = 0, open = false, lastFocus = null;
   const PAGES = [
-    {label:"Overview",   hint:"Trends & concentration", href:"/"},
-    {label:"Live",       hint:"Top categories now",     href:"/live"},
-    {label:"Trending",   hint:"New entrants",           href:"/trending"},
-    {label:"Publishers", hint:"Attention share",        href:"/publishers"},
-    {label:"Historical", hint:"Rankings & movers",      href:"/historical"},
+    {label:"Today",      hint:"The day's biggest stories", href:"/"},
+    {label:"Live",       hint:"Top categories now",        href:"/live"},
+    {label:"Trending",   hint:"New entrants",              href:"/trending"},
+    {label:"Publishers", hint:"Attention share",           href:"/publishers"},
+    {label:"Trends",     hint:"Viewership, ranks & movers", href:"/historical"},
   ];
 
   const buildPalette = () => {

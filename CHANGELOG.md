@@ -20,6 +20,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are
 
 ---
 
+## [2.7.0] — 2026-11-22 — Today, Trends & one Live list
+
+### Changed
+- **The home page is now "Today"**: a headline written from the latest data (who
+  leads, who owns the attention, what's new), the total audience, then four story
+  cards — one per page (biggest move today, newest breakout, biggest publisher
+  swing, two years on) — each linking to where the story continues, and the top 5
+  right now. It rewrites itself after every data update.
+- **On phones**, the headline shows its first sentence with the rest behind
+  "More ↓", the stories become a compact 2×2 grid of tiles, and the top 5 rows are
+  slimmer — the briefing now fits in about a screen and a half.
+- **Live is one list** with a "By viewers / By top-heaviness" switch, replacing the
+  two near-identical lists (the old Fragility section). `/live?sort=heavy` opens on
+  the second order.
+- **"Historical" is now "Trends"** and holds everything over time: the viewership
+  trend and concentration charts (moved from the home page), the rank heatmap and
+  the movers. The trend chart gains a **Log scale** toggle that switches on by
+  itself when one category dwarfs the rest.
+- Menu labels: Today · Live · Trending · Publishers · Trends (URLs unchanged).
+- Cache-bust bumped (`style.css?v=28`, `common.js?v=30`).
+
 ## [2.6.3] — 2026-11-22 — Publish only the site
 
 ### Changed

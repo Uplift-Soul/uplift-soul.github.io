@@ -3,22 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="How Twitch category rankings change month to month since 2024, plus the biggest viewership risers and fallers versus the same dates two years earlier.">
+<meta name="description" content="Twitch viewership trends since 2024: daily peak viewers per category, monthly rank changes, audience concentration, and the biggest risers and fallers on two years ago.">
 <meta name="theme-color" content="#0e110f">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="INVST Gaming">
-<meta property="og:title" content="Twitch Category Rankings by Month">
-<meta property="og:description" content="How Twitch category rankings change month to month since 2024, plus the biggest viewership risers and fallers versus the same dates two years earlier.">
+<meta property="og:title" content="Twitch Viewership Trends & Category Rankings">
+<meta property="og:description" content="Twitch viewership trends since 2024: daily peak viewers per category, monthly rank changes, audience concentration, and the biggest risers and fallers on two years ago.">
 <meta property="og:url" content="https://invstgaming.co.uk/historical">
 <meta property="og:image" content="https://invstgaming.co.uk/assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
-<title>Twitch Category Rankings by Month | INVST Gaming</title>
+<title>Twitch Viewership Trends & Category Rankings | INVST Gaming</title>
 <link rel="canonical" href="https://invstgaming.co.uk/historical">
 <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=27">
+<link rel="stylesheet" href="assets/style.css?v=28">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js" integrity="sha384-cVMg8E3QFwTvGCDuK+ET4PD341jF3W8nO1auiXfuZNQkzbUUiBGLsIQUE+b1mxws" crossorigin="anonymous"></script>
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -65,17 +67,17 @@
 <body>
 <div class="wrap">
   <nav class="nav">
-    <a href="/">Overview</a>
+    <a href="/">Today</a>
     <a href="/live">Live</a>
     <a href="/trending">Trending</a>
     <a href="/publishers">Publishers</a>
-    <a href="/historical" class="active">Historical</a>
+    <a href="/historical" class="active">Trends</a>
   </nav>
 
   <header>
     <div class="brand">
       <div class="kicker" id="kicker">Historical · monthly rankings</div>
-      <h1>IN<svg class="vmark" viewBox="0 0 38 42" overflow="visible" aria-hidden="true"><polyline points="5,8 16,36 33,3" stroke-width="9"/></svg>ST <span>History</span></h1>
+      <h1>IN<svg class="vmark" viewBox="0 0 38 42" overflow="visible" aria-hidden="true"><polyline points="5,8 16,36 33,3" stroke-width="9"/></svg>ST <span>Trends</span></h1>
       <div class="wordsub">Gaming</div>
     </div>
     <div class="status"><span class="dot"></span><span id="updated">connecting…</span></div>
@@ -84,6 +86,12 @@
   <div class="kpis js-err" id="kpis">
     <div class="kpi lead skel" aria-hidden="true"></div><div class="kpi skel" aria-hidden="true"></div>
   </div>
+
+  <section class="panel trend">
+    <h2>Viewership Trend</h2>
+    <div class="cap">Peak concurrent viewers per category, smoothed to a 7-day rolling average. Opens on the live feed; Archive and All add the 2024–25 data (the break in the lines is the gap before live collection began). <b>Log scale</b> spaces the lines evenly when one category dwarfs the rest — it switches on by itself when that happens.</div>
+    <div class="chartbox"><canvas id="trend"></canvas></div>
+  </section>
 
   <section class="panel">
     <h2>Rankings Over Time</h2>
@@ -94,7 +102,13 @@
     </div></div>
   </section>
 
-  <section class="panel alt">
+  <section class="panel conc alt">
+    <h2>Concentration Over Time</h2>
+    <div class="cap">Share of each category's viewers held by its top 10 streamers, by month — higher means more top-heavy. Opens on the live feed; Archive and All add the 2024–25 data.</div>
+    <div class="chartbox"><canvas id="conc"></canvas></div>
+  </section>
+
+  <section class="panel">
     <h2>Biggest Movers</h2>
     <div class="cap" id="movers-cap">Risers and fallers by peak concurrent viewers.</div>
     <div id="movers" class="js-err"><div class="skelrows" aria-hidden="true">
@@ -106,7 +120,7 @@
   <footer>INVST Gaming · Twitch Helix data · collected every 3 hours · powered by a Raspberry Pi · <a href="mailto:invstgaming@gmail.com">invstgaming@gmail.com</a></footer>
 </div>
 
-<script src="assets/common.js?v=29"></script>
+<script src="assets/common.js?v=30"></script>
 <script>
 /* months / window dates are date-only strings (UTC midnight) — always format them
    in UTC, or visitors west of GMT see the previous month/day */
@@ -118,7 +132,7 @@ function renderRankings(data){
   /* masthead kicker: the span the bump chart actually covers */
   const k = document.getElementById("kicker"), ms = r.months || [];
   if(k && ms.length)
-    k.textContent = "Historical · " + fmtUTC(ms[0],{month:"short",year:"numeric"}) +
+    k.textContent = "Trends · " + fmtUTC(ms[0],{month:"short",year:"numeric"}) +
       " – " + fmtUTC(ms[ms.length-1],{month:"short",year:"numeric"});
   const host = document.getElementById("ranks");
 
@@ -240,6 +254,115 @@ function renderMovers(data){
   requestAnimationFrame(()=>host.querySelectorAll(".fill").forEach(x=>x.style.width=x.dataset.w+"%"));
 }
 
+/* ---- over-time charts (moved here from the home page; their data is in overview.json) ---- */
+const tickFont = {family:"IBM Plex Mono", size:10};
+const tipOpts = {backgroundColor:CHART_THEME.tipBg, borderColor:CHART_THEME.tipBorder, borderWidth:1, cornerRadius:10, padding:10,
+  titleFont:{family:"IBM Plex Mono"}, bodyFont:{family:"IBM Plex Mono"}};
+
+function renderTrend(data){
+  const trend=data.trend||[];
+  const cats=[...new Set(trend.map(t=>t.category))];
+  const W=7; // trailing window: smooths daily jitter into a readable trend line
+  const datasets=cats.map((cat,i)=>{
+    const raw=trend.filter(t=>t.category===cat).map(t=>({x:t.day,y:t.viewership}))
+      .sort((a,b)=>a.x<b.x?-1:a.x>b.x?1:0);
+    /* 7-day rolling average within each collection era; break the line across
+       gaps (>45 days) so it never interpolates across the archive→live gap */
+    const out=[]; let seg=[];
+    const emit=()=>{ for(let k=0;k<seg.length;k++){
+      let s=0,n=0; for(let m=Math.max(0,k-W+1);m<=k;m++){ s+=seg[m].y; n++; }
+      out.push({x:seg[k].x, y:Math.round(s/n)}); } };
+    for(const p of raw){
+      if(seg.length && (new Date(p.x)-new Date(seg[seg.length-1].x) > 45*864e5)){ emit(); out.push({x:p.x, y:null}); seg=[]; }
+      seg.push(p);
+    }
+    emit();
+    return {label:cat, data:out, borderColor:PALETTE[i%PALETTE.length], backgroundColor:PALETTE[i%PALETTE.length],
+      borderWidth:2, pointRadius:0, pointHoverRadius:4, tension:.35, spanGaps:false};
+  });
+
+  /* log scale by default when the leader's latest level is 3×+ the runner-up's,
+     so one runaway category (e.g. a huge launch) doesn't flatten every other line */
+  const lastVal = d => { for(let k=d.data.length-1;k>=0;k--) if(d.data[k].y!=null) return d.data[k].y; return 0; };
+  const lv = datasets.map(lastVal).sort((a,b)=>b-a);
+  const startLog = renderTrend.log != null ? renderTrend.log : (lv.length > 1 && lv[1] > 0 && lv[0] >= 3*lv[1]);
+  renderTrend.log = startLog;
+
+  const yScale = log => log
+    ? {type:"logarithmic", grid:{color:CHART_THEME.grid},
+       ticks:{color:CHART_THEME.tick, font:tickFont, autoSkip:true,
+              callback:v=>{ const m=v/Math.pow(10,Math.floor(Math.log10(v))); return [1,2,5].includes(Math.round(m)) ? fmt(v) : ""; }}}
+    : {type:"linear", grid:{color:CHART_THEME.grid}, ticks:{color:CHART_THEME.tick, font:tickFont, callback:v=>fmt(v)}};
+
+  const cv=document.getElementById("trend");
+  cv.setAttribute("role","img");
+  cv.setAttribute("aria-label","Line chart: daily Twitch viewership for the top "+cats.length+" categories.");
+  const chart = new Chart(cv,{
+    type:"line", data:{datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:"nearest",intersect:false},
+      plugins:{legend:{labels:{color:CHART_THEME.legend}},
+        tooltip:Object.assign({callbacks:{label:c=>` ${c.dataset.label}: ${fullNum(c.parsed.y)}`}}, tipOpts)},
+      scales:{
+        x:{type:"time", time:{minUnit:"day"}, grid:{color:CHART_THEME.grid},
+           ticks:{color:CHART_THEME.tick, font:tickFont, maxRotation:0, autoSkip:true, maxTicksLimit:8}},
+        y:yScale(startLog)
+      }
+    }
+  });
+
+  /* "Log scale" toggle, appended to the range pills the controls plugin injected */
+  const pills = cv.closest(".panel").querySelector(".chartctl .pills");
+  if(pills){
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "cpill" + (startLog ? " on" : "");
+    b.textContent = "Log scale"; b.style.marginLeft = "10px";
+    b.setAttribute("aria-pressed", String(startLog));
+    b.onclick = () => {
+      renderTrend.log = !renderTrend.log;
+      chart.options.scales.y = yScale(renderTrend.log);
+      chart.update();
+      b.classList.toggle("on", renderTrend.log); b.setAttribute("aria-pressed", String(renderTrend.log));
+      track("chart_scale_toggle", { scale: renderTrend.log ? "log" : "linear", chart: "trend" });
+    };
+    pills.appendChild(b);
+  }
+}
+
+function renderConcentration(data){
+  const cc = data.concentration || {months:[], series:[]};
+  if(!cc.series || !cc.series.length) return;
+  const labels = cc.months.map(m=>fmtUTC(m,{month:"short",year:"2-digit"}));
+  const datasets = cc.series.map((s,i)=>({label:s.category, data:s.pct,
+    borderColor:PALETTE[i%PALETTE.length], backgroundColor:PALETTE[i%PALETTE.length],
+    borderWidth:1.8, pointRadius:2.5, pointHoverRadius:5, tension:.25, spanGaps:false}));
+  const cv=document.getElementById("conc");
+  cv.setAttribute("role","img");
+  cv.setAttribute("aria-label","Line chart: monthly share of each category's viewers held by its top 10 streamers.");
+  new Chart(cv,{
+    type:"line", data:{labels,datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:"nearest",intersect:false},
+      plugins:{legend:{labels:{color:CHART_THEME.legend}},
+        tooltip:Object.assign({callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y!=null?c.parsed.y.toFixed(1)+'%':'—'}`}}, tipOpts)},
+      scales:{
+        x:{grid:{color:CHART_THEME.grid}, ticks:{color:CHART_THEME.tick, font:tickFont, maxRotation:0, autoSkip:true, maxTicksLimit:12}},
+        y:{min:0, max:100, grid:{color:CHART_THEME.grid}, ticks:{color:CHART_THEME.tick, font:tickFont, callback:v=>v+"%"}}
+      }
+    }
+  });
+}
+
+function renderCharts(ov){
+  /* rebuild in place: drop the injected controls first so they aren't duplicated */
+  document.querySelectorAll(".panel.trend .chartctl, .panel.conc .chartctl").forEach(e=>e.remove());
+  ["trend","conc"].forEach(id => { const c = Chart.getChart(id); if(c) c.destroy(); });
+  renderTrend(ov);
+  renderConcentration(ov);
+}
+
 function refreshHistorical(data){
   renderHistKpis(data);
   renderRankings(data);
@@ -253,6 +376,12 @@ loadData("history.json").then(data=>{
   renderMovers(data);
   if(window.startAutoRefresh) startAutoRefresh("history.json", data, refreshHistorical);
 }).catch(showError);
+
+/* the charts' data lives in overview.json (it also sets the chart focus ranking) */
+loadData("overview.json").then(ov=>{
+  renderCharts(ov);
+  if(window.startAutoRefresh) startAutoRefresh("overview.json", ov, renderCharts);
+}).catch(()=>{});
 </script>
 </body>
 </html>
