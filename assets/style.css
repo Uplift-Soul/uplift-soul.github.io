@@ -199,6 +199,55 @@ h1 .vmark polyline{stroke:var(--accent);fill:none;stroke-linecap:square;stroke-l
 @media (max-width:900px){ .hubgrid{grid-template-columns:repeat(2,1fr)} }
 @media (max-width:520px){ .hubgrid{grid-template-columns:1fr} }
 
+/* ---- "Today" briefing (home): a written headline from the latest data, then
+   one story card per page, each linking to where the story continues ---- */
+.today{margin:0 0 30px}
+.headline{font-family:var(--font-display);font-weight:600;letter-spacing:-.01em;
+  font-size:clamp(23px,3.3vw,33px);line-height:1.28;max-width:34ch;margin:0}
+.headline b{color:var(--accent);font-weight:600}
+.headline.skel{min-height:3.9em;border-radius:12px}
+.standfirst{font-size:15px;line-height:1.6;color:var(--muted);max-width:64ch;margin:14px 0 24px}
+.standfirst b{color:var(--text);font-weight:600}
+.story .skick{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.story .stitle{font-family:var(--font-display);font-weight:600;font-size:19px;line-height:1.2}
+.story .sfig{font-family:var(--font-mono);font-size:13px;font-weight:500}
+.story .sfig.up{color:var(--accent)} .story .sfig.down{color:var(--coral)}
+.story .sgo{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;color:var(--faint);
+  margin-top:auto;padding-top:4px;transition:color .25s}
+.story:hover .sgo{color:var(--accent)}
+.morelink{display:inline-block;margin:10px 0 4px;font-family:var(--font-mono);font-size:11px;
+  letter-spacing:.06em;color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
+.morelink:hover{border-bottom-color:var(--accent)}
+/* short/long variants of a story's label and figure: long on desktop, short on phones */
+.story .sm{display:none}
+/* headline "More" toggle — phones only */
+.hlmore{display:none;background:none;border:0;padding:0;margin:8px 0 0;cursor:pointer;
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:var(--accent)}
+@media (max-width:760px){
+  /* headline: first sentence only, the rest one tap away */
+  .headline{font-size:22px;line-height:1.3}
+  .headline .hlrest{display:none}
+  .headline.open .hlrest{display:inline}
+  .hlmore{display:inline-block}
+  .standfirst{font-size:13.5px;margin:10px 0 18px}
+  /* stories: compact 2×2 tiles — label, name, number; tap to open the page */
+  .hubgrid.stories{grid-template-columns:1fr 1fr;gap:10px}
+  .story{padding:12px;gap:5px;border-radius:16px}
+  .story .lg,.story .hubdesc,.story .sgo{display:none}
+  .story .sm{display:inline}
+  .story .skick{font-size:8.5px;letter-spacing:.12em}
+  .story .stitle{font-size:15.5px}
+  .story .sfig{font-size:12px;margin-top:auto}
+  /* slimmer top-5 rows */
+  #top5 .xrow{padding:5px 10px}
+  #top5 .cat{font-size:14px}
+  #top5 .barname{margin-bottom:4px}
+  #top5 .track{height:4px}
+}
+
+/* sort / view switch above a list (reuses the chart range-pill look) */
+.listctl{margin:-2px 0 14px}
+
 /* ---- panels: broadsheet sections, not boxes ----
    Each section is separated by a masthead hairline and headed by a serif
    headline over a mono dek — no card, no glass, no shadow. */
