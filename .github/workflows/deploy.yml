@@ -16,12 +16,13 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+# Build and deploy are separate jobs: when deploy-pages runs in the same job right
+# after the upload, its artifact lookup can come back empty ("No artifacts named
+# github-pages") - actions/deploy-pages#451, frequent since Nov 2026. The job
+# handover gives the artifact time to register.
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -37,6 +38,14 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

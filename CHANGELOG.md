@@ -20,6 +20,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versions are
 
 ---
 
+## [2.7.1] — 2026-11-23 — Deploy reliability
+
+### Fixed
+- Deploys were failing again with "No artifacts named github-pages" — a known timing
+  bug in GitHub's Pages tooling (actions/deploy-pages#451) that became frequent from
+  21 Nov: when the publish step runs in the same job as the upload, it can look for
+  the files before GitHub has registered them. The workflow now builds and deploys
+  in two separate jobs, which gives the upload time to register.
+
 ## [2.7.0] — 2026-11-22 — Today, Trends & one Live list
 
 ### Changed
